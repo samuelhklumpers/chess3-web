@@ -76,15 +76,44 @@ class SquareBoardWidget(tk.Canvas):
 class FreeChess:
     def __init__(self):
         self.touched = None
+        self.turn_num = 0
+        self.won = False
 
     def pass_turn(self):
-        ...
+        self.turn_num += 1
+
+    def check_won(self, board):
+        kings = {}
+
+        for tile in board.tiles.flat:
+            piece = tile.piece
+
+            if piece and piece.shape == "K":
+                kings.setdefault(piece.col, 0)
+                kings[piece.col] += 1
+
+        not_dead = [c for c in kings if kings[c] > 0]
+        alive = len(not_dead)
+
+        if alive > 1:
+            ...
+        elif alive == 1:
+            self.won = True
+            print(not_dead[0], "won")
+        else:
+            print("nobody won")
+            self.won = True
 
     def process(self, board: SquareBoardWidget, pos):
+        if self.won:
+            return
+
         move = self.touch(board, pos)
 
         if move:
             self.move(*move)
+
+        self.check_won(board)
 
     def touch(self, board: SquareBoardWidget, pos):
         if self.touched:
@@ -101,7 +130,7 @@ class FreeChess:
 
             return ()
 
-    def move(self, board, pos1, pos2):
+    def move(self, board, pos1, pos2, turn=True):
         if pos1 == pos2:
             return
 
@@ -111,7 +140,10 @@ class FreeChess:
         tile2.piece = tile1.piece
         tile1.piece = None
 
-        self.pass_turn()
+        tile2.piece.moved = self.turn_num + 1
+
+        if turn:
+            self.pass_turn()
 
         board.redraw()
 
@@ -123,6 +155,8 @@ class TurnChess(FreeChess):
         self.turn = "w"
 
     def pass_turn(self):
+        FreeChess.pass_turn(self)
+
         self.turn = "b" if self.turn == "w" else "w"
 
     def touch(self, board: SquareBoardWidget, tile_i):
@@ -140,7 +174,7 @@ class TurnChess(FreeChess):
 
 
 class MoveChess(FreeChess):
-    def move(self, board, pos1, pos2):
+    def move(self, board, pos1, pos2, turn=True):
         piece1 = board.tiles[pos1].piece
         s = piece1.shape
         c = piece1.col
@@ -157,6 +191,9 @@ class MoveChess(FreeChess):
         can = False
         if s == "K":
             can = np.all(abs(dp) <= 1)
+
+            if self.castle(board, pos1, pos2, piece1, dp):
+                return
         elif s == "D":
             can = np.sum(dp != 0) == 1 or abs(dp[0]) == abs(dp[1])
         elif s == "T":
@@ -167,11 +204,63 @@ class MoveChess(FreeChess):
             can = abs(dp[0]) == abs(dp[1])
         elif s == "p":
             pawn_dp = [0, -1] if c == "w" else [0, 1]
+            pawn_dp = np.array(pawn_dp)
 
-            can = np.all(dp == pawn_dp)
+            start = 6 if c == "w" else 1
+            first = start == pos1[1]
+
+            can = (not piece2 and (np.all(dp == pawn_dp) or (first and np.all(dp == 2 * pawn_dp)))) or (piece2 and dp[1] == pawn_dp[1] and abs(dp[0]) == 1)
+
+            if can and abs(dp[1]) == 2:
+                piece1.double = True
+
+            if self.en_passant(board, pos1, pos2, piece1, dp, pawn_dp):
+                return
 
         if can:
-            FreeChess.move(self, board, pos1, pos2)
+            FreeChess.move(self, board, pos1, pos2, turn=turn)
+
+    def castle(self, board, pos1, pos2, piece1, dp):
+        if piece1.moved:
+            return False
+
+        if abs(dp[0]) != 2 or dp[1] != 0:
+            return False
+
+        pos3 = pos1 + dp // 2
+        pos4 = np.array(pos2) + [np.sign(dp[0]) - (1 if dp[0] < 0 else 0), 0]
+
+        pos3 = tuple(pos3)
+        pos4 = tuple(pos4)
+
+        piece2 = board.tiles[pos4].piece
+
+        if not piece2 or piece2.shape != "T" or piece2.moved:
+            return False
+
+        FreeChess.move(self, board, pos1, pos2, turn=False)
+        FreeChess.move(self, board, pos4, pos3)
+
+    def en_passant(self, board, pos1, pos2, piece1, dp, pawn_dp):
+        pos1 = np.array(pos1)
+
+        if np.all(dp == pawn_dp + [1, 0]):
+            pos3 = pos1 + [1, 0]
+        elif np.all(dp == pawn_dp - [1, 0]):
+            pos3 = pos1 - [1, 0]
+        else:
+            return False
+
+        pos1 = tuple(pos1)
+        pos3 = tuple(pos3)
+
+        piece2 = board.tiles[pos3].piece
+
+        if not piece2 or piece2.moved != self.turn_num or not piece2.double or piece1.col == piece2.col:
+            return False
+
+        board.tiles[pos3].piece = None
+        FreeChess.move(self, board, pos1, pos2)
 
 
 class MoveTurnChess(MoveChess, TurnChess):
@@ -180,9 +269,13 @@ class MoveTurnChess(MoveChess, TurnChess):
         TurnChess.__init__(self)
 
     def process(self, board: SquareBoardWidget, pos):
+        if self.won:
+            return
+
         move = TurnChess.touch(self, board, pos)
         if move:
             MoveChess.move(self, *move)
+            self.check_won(board)
 
 
 class NormalTile:
@@ -194,6 +287,8 @@ class Piece:
     def __init__(self, shape="A", col="w"):
         self.shape = shape
         self.col = col
+        self.moved = 0
+        self.double = False
 
 
 class Chess(Game):
