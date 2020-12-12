@@ -1,4 +1,13 @@
+import json
+import select
+import socket
+import threading
+import time
 import tkinter as tk
+import traceback
+from abc import ABC, abstractmethod
+from tkinter import simpledialog
+
 import numpy as np
 import itertools as itr
 
@@ -13,6 +22,11 @@ def grouper(iterable, n, fillvalue=None):
 class Game(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self, "game")
+
+        self.protocol("WM_DELETE_WINDOW", self.cleanup)
+
+    def cleanup(self, event=None):
+        self.destroy()
 
 
 class SquareBoardWidget(tk.Canvas):
@@ -74,13 +88,14 @@ class SquareBoardWidget(tk.Canvas):
 
 
 class FreeChess:
-    def __init__(self):
+    def __init__(self, effects):
+        self.effects = effects
         self.touched = None
         self.turn_num = 0
         self.won = False
 
     def pass_turn(self):
-        self.turn_num += 1
+        self.effects.force_state("turn_num", self.turn_num + 1)
 
     def check_won(self, board):
         kings = {}
@@ -98,11 +113,11 @@ class FreeChess:
         if alive > 1:
             ...
         elif alive == 1:
-            self.won = True
+            self.effects.force_state("won", True)
             print(not_dead[0], "won")
         else:
             print("nobody won")
-            self.won = True
+            self.effects.force_state("won", True)
 
     def process(self, board: SquareBoardWidget, pos):
         if self.won:
@@ -134,13 +149,7 @@ class FreeChess:
         if pos1 == pos2:
             return
 
-        tile1 = board.tiles[pos1]
-        tile2 = board.tiles[pos2]
-
-        tile2.piece = tile1.piece
-        tile1.piece = None
-
-        tile2.piece.moved = self.turn_num + 1
+        self.effects.force_move(pos1, pos2)
 
         if turn:
             self.pass_turn()
@@ -149,15 +158,15 @@ class FreeChess:
 
 
 class TurnChess(FreeChess):
-    def __init__(self):
-        FreeChess.__init__(self)
+    def __init__(self, effects):
+        FreeChess.__init__(self, effects)
 
         self.turn = "w"
 
     def pass_turn(self):
         FreeChess.pass_turn(self)
 
-        self.turn = "b" if self.turn == "w" else "w"
+        self.effects.force_state("turn", "b" if self.turn == "w" else "w")
 
     def touch(self, board: SquareBoardWidget, tile_i):
         if self.touched:
@@ -174,6 +183,9 @@ class TurnChess(FreeChess):
 
 
 class MoveChess(FreeChess):
+    def __init__(self, effects):
+        FreeChess.__init__(self, effects)
+
     def move(self, board, pos1, pos2, turn=True):
         piece1 = board.tiles[pos1].piece
         s = piece1.shape
@@ -264,9 +276,9 @@ class MoveChess(FreeChess):
 
 
 class MoveTurnChess(MoveChess, TurnChess):
-    def __init__(self):
-        MoveChess.__init__(self)
-        TurnChess.__init__(self)
+    def __init__(self, effects):
+        MoveChess.__init__(self, effects)
+        TurnChess.__init__(self, effects)
 
     def process(self, board: SquareBoardWidget, pos):
         if self.won:
@@ -291,18 +303,164 @@ class Piece:
         self.double = False
 
 
-class Chess(Game):
+class Worker(ABC):
     def __init__(self):
+        self.thread = None
+
+    def start(self):
+        if not self.is_running():
+            self.thread = threading.Thread(target=self.run)
+            self.thread.start()
+
+    @abstractmethod
+    def run(self):
+        ...
+
+    def is_running(self):
+        return self.thread and self.thread.is_alive()
+
+    @abstractmethod
+    def halt(self):
+        ...
+
+    def stop(self):
+        if self.thread is None:
+            return
+
+        if self.is_running():
+            self.halt()
+
+        try:
+            self.thread.join(timeout=1)
+        except:
+            ...
+
+        if self.is_running():
+            raise RuntimeError("Thread is still alive")
+
+        self.thread = None
+
+
+class Effects(Worker):
+    def __init__(self, game, board, sock=None, online=False):
+        Worker.__init__(self)
+
+        self.game = game
+        self.board = board
+        self.sock = sock
+        self.online = online
+        self.running = False
+        self.cond = None
+
+    def process(self, cmd):
+        for part in cmd.split(b";"):
+            if not part:
+                continue
+
+            tgt, args = json.loads(part.decode())
+
+            if tgt == "tile":
+                self.force_tile(tuple(args[0]), *args[1:], recv=True)
+            elif tgt == "state":
+                self.force_state(*args, recv=True)
+            elif tgt == "move":
+                self.force_move(tuple(args[0]), tuple(args[1]), recv=True)
+
+            self.board.after_idle(self.board.redraw)
+
+    def send(self, cmd):
+        js = json.dumps(cmd)
+        js += ";"
+
+        self.sock.send(js.encode())
+
+    def force_tile(self, tile_ix, attr, val, recv=False):
+        self.board.tiles[tile_ix].__setattr__(attr, val)
+
+        if self.online and not recv:
+            cmd = ("tile", (tile_ix, attr, val))
+            self.send(cmd)
+
+    def force_move(self, pos1, pos2, recv=False):
+        board = self.board
+
+        tile1 = board.tiles[pos1]
+        tile2 = board.tiles[pos2]
+
+        tile2.piece = tile1.piece
+        tile1.piece = None
+
+        tile2.piece.moved = self.board.rules.turn_num + 1
+
+        if self.online and not recv:
+            cmd = ("move", (pos1, pos2))
+            self.send(cmd)
+
+    def force_state(self, attr, val, recv=False):
+        self.board.rules.__setattr__(attr, val)
+
+        if self.online and not recv:
+            cmd = ("state", (attr, val))
+            self.send(cmd)
+
+    def run(self):
+        try:
+            self.running = True
+            self.cond = threading.Condition()
+            self.sock.settimeout(1)
+
+            with self.cond:
+                while self.running:
+                    try:
+                        data = self.sock.recv(1024)
+
+                        if data:
+                            self.process(data)
+                        else:
+                            self.halt()
+                    except socket.timeout:
+                        self.cond.wait(1)
+        except Exception:
+            traceback.print_exc()
+            self.halt()
+
+    def halt(self):
+        if self.running:
+            self.running = False
+
+        if self.cond:
+            res = self.cond.acquire(blocking=False)
+
+            if res:
+                self.cond.notify()
+                self.cond.release()
+            else:
+                print(self, "blocked!")
+
+        try:
+            self.sock.shutdown(0)
+            self.sock.close()
+        except OSError:
+            ...
+
+
+class Chess(Game):
+    def __init__(self, sock=None):
         Game.__init__(self)
 
         self.board = SquareBoardWidget(self)
 
-        self.board.set_rules(MoveTurnChess())
+        self.effects = Effects(self, self.board, sock=sock, online=bool(sock))
+
+        self.board.set_rules(MoveTurnChess(self.effects))
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
         self.board.grid(sticky="nsew")
+
+        if sock:
+            self.after_idle(lambda event=None: self.effects.start())
 
     def load_board_str(self, board_str):
         players = board_str.split(";")
@@ -320,10 +478,118 @@ class Chess(Game):
 
                 self.board.tiles[i, j].piece = piece
 
+    def cleanup(self, event=None):
+        if self.effects.online:
+            self.effects.halt()
 
-if __name__ == '__main__':
-    chess = Chess()
+        Game.cleanup(self)
+
+
+def make_socket(remote_address, remote_port, local_port=None, active=True):
+    if not local_port:
+        local_port = remote_port
+
+    s = socket.socket()
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+    s.bind(("", local_port))
+
+    if active:
+        print("trying to connect", (remote_address, remote_port))
+
+        while True:
+            try:
+                s.connect((remote_address, remote_port))
+                break
+            except:
+                traceback.print_exc()
+                print("retrying")
+                time.sleep(10)
+    else:
+        print("listening")
+        s.listen(0)
+
+        s, a = s.accept()
+        print("accepted", a)
+
+    print("connected")
+
+    return s
+
+
+class OnlineDialog(simpledialog.Dialog):
+    def __init__(self):
+        self.root = tk.Tk()
+
+        simpledialog.Dialog.__init__(self, title="Online Chess", parent=self.root)
+
+        self.address = None
+        self.this_port = None
+        self.other_port = None
+        self.active = None
+
+    def body(self, master):
+        self.address = tk.StringVar()
+        self.this_port = tk.StringVar()
+        self.other_port = tk.StringVar()
+        self.active = tk.BooleanVar()
+
+        addr_label = tk.Label(master, text="Address:", justify=tk.LEFT)
+        addr_entry = tk.Entry(master, textvariable=self.address)
+
+        local_label = tk.Label(master, text="Local port (empty defaults to remote port):", justify=tk.LEFT)
+        local_entry = tk.Entry(master, textvariable=self.this_port)
+
+        remote_label = tk.Label(master, text="Remote port:", justify=tk.LEFT)
+        remote_entry = tk.Entry(master, textvariable=self.other_port)
+
+        active_label = tk.Label(master, text="Active:", justify=tk.LEFT)
+        active_tickbox = tk.Checkbutton(master, variable=self.active)
+
+        addr_label.grid(row=0, column=0)
+        addr_entry.grid(row=0, column=1)
+
+        local_label.grid(row=1, column=0)
+        local_entry.grid(row=1, column=1)
+
+        remote_label.grid(row=2, column=0)
+        remote_entry.grid(row=2, column=1)
+
+        active_label.grid(row=3, column=0)
+        active_tickbox.grid(row=3, column=1)
+
+        return addr_entry
+
+    def validate(self):
+        addr, lport, rport, active = self.address.get(), self.this_port.get(), self.other_port.get(), self.active.get()
+        lport = int(lport) if lport else rport
+        rport = int(rport) if rport else rport
+
+        self.result = addr, lport, rport, active
+        print(self.result)
+        return True
+
+    def get_result(self):
+        self.root.destroy()
+        return self.result
+
+
+def play_chess(online=False):
+    if online:
+        dialog = OnlineDialog()
+
+        addr, local_port, remote_port, active = dialog.get_result()
+
+        sock = make_socket(addr, remote_port, local_port, active)
+    else:
+        sock = None
+
+    chess = Chess(sock=sock)
 
     chess.load_board_str("wa8Th8Tb8Pg8Pc8Lf8Ld8De8Ka7pb7pc7pd7pe7pf7pg7ph7p;ba1Th1Tb1Pg1Pc1Lf1Ld1De1Ka2pb2pc2pd2pe2pf2pg2ph2p")
 
     chess.mainloop()
+
+
+if __name__ == '__main__':
+    play_chess(online=True)
