@@ -1,4 +1,5 @@
 import json
+import random
 import select
 import socket
 import threading
@@ -92,7 +93,7 @@ class FreeChess:
         self.effects = effects
         self.touched = None
         self.turn_num = 0
-        self.won = False
+        self.won = None
 
     def pass_turn(self):
         self.effects.force_state("turn_num", self.turn_num + 1)
@@ -113,11 +114,9 @@ class FreeChess:
         if alive > 1:
             ...
         elif alive == 1:
-            self.effects.force_state("won", True)
-            print(not_dead[0], "won")
+            self.effects.force_state("won", not_dead[0])
         else:
-            print("nobody won")
-            self.effects.force_state("won", True)
+            self.effects.force_state("won", "nobody")
 
     def process(self, board: SquareBoardWidget, pos):
         if self.won:
@@ -162,13 +161,20 @@ class TurnChess(FreeChess):
         FreeChess.__init__(self, effects)
 
         self.turn = "w"
+        self.allowed = "wb"
 
     def pass_turn(self):
         FreeChess.pass_turn(self)
 
         self.effects.force_state("turn", "b" if self.turn == "w" else "w")
 
+    def set_player(self, p):
+        self.allowed = p
+
     def touch(self, board: SquareBoardWidget, tile_i):
+        if not self.turn in self.allowed:
+            return ()
+
         if self.touched:
             move = FreeChess.touch(self, board, tile_i)
         else:
@@ -399,15 +405,34 @@ class Effects(Worker):
     def force_state(self, attr, val, recv=False):
         self.board.rules.__setattr__(attr, val)
 
+        if attr == "won":  # xd
+            print(val, "won")
+
         if self.online and not recv:
             cmd = ("state", (attr, val))
             self.send(cmd)
+
+    def decide_colour(self):
+        roll = random.getrandbits(64)
+
+        self.sock.send(str(roll).encode())
+
+        other = int(self.sock.recv(1024).decode())
+
+        if roll > other:
+            print("You are playing as white")
+            self.board.rules.set_player("w")
+        else:
+            print("You are playing as black")
+            self.board.rules.set_player("b")
 
     def run(self):
         try:
             self.running = True
             self.cond = threading.Condition()
             self.sock.settimeout(1)
+
+            self.decide_colour()
 
             with self.cond:
                 while self.running:
