@@ -1,5 +1,11 @@
+import json
+import random
+import socket
 import threading
+import time
 import tkinter as tk
+import traceback
+from tkinter import simpledialog
 
 import numpy as np
 import itertools as itr
@@ -8,15 +14,6 @@ import itertools as itr
 def grouper(iterable, n, fillvalue=None):
     args = [iter(iterable)] * n
     return itr.zip_longest(*args, fillvalue=fillvalue)
-
-
-"""def srange(f, t, s=1):
-    s = abs(s)
-
-    sgn = np.sign(t - f)
-    sgn = sgn if sgn else 1
-
-    return range(f, t, sgn * s)"""
 
 
 def xyiter(x1, y1, x2, y2, incl_start=False, incl_end=False):
@@ -102,7 +99,7 @@ class Ruleset:
         self.rules = {}
         self.lock = threading.RLock()
 
-        self.debug = False
+        self.debug = True
 
     def add_rule(self, rule, prio=1):
         # 0 forbidden/debug
@@ -116,6 +113,26 @@ class Ruleset:
         except ValueError as e:
             print(elist)
             raise e
+
+    def process_no_prop(self, effect, args):
+        if self.debug:
+            print(effect, args)
+
+        keys = list(self.rules.keys())
+
+        early = [k for k in keys if k >= 0]
+        late = [k for k in keys if k < 0]
+
+        early.sort()
+        late.sort()
+
+        # make corecursive
+        for k in early:
+            for rule in self.rules[k]:
+                rule.process(self.game, effect, args)
+        for k in late:
+            for rule in self.rules[k]:
+                rule.process(self.game, effect, args)
 
     def process(self, effect, args):
         with self.lock:
@@ -135,6 +152,17 @@ class Ruleset:
 
         # make corecursive
         for k in early:
+            elist = []
+
+            for rule in self.rules[k]:
+                res = rule.process(self.game, effect, args)
+
+                if res:
+                    elist += res
+
+            self.process_all(elist)
+
+        for k in late:
             elist = []
 
             for rule in self.rules[k]:
@@ -183,6 +211,17 @@ class MoveTurnRule(Rule):
             piece = game.board.get_tile(args[0]).get_piece()
 
             if piece.get_colour() == game.get_turn():
+                return [("move21", args)]
+            else:
+                return []
+
+
+class MovePlayerRule(Rule):
+    def process(self, game, effect, args):
+        if effect == "move21":
+            piece = game.board.get_tile(args[0]).get_piece()
+
+            if piece.get_colour() in game.player:
                 return [("move3", args)]
             else:
                 return []
@@ -479,6 +518,49 @@ class WinRule(Rule):
                 return [("wins", None)]
 
 
+class ReceiveRule(Rule):
+    def run(self, game):
+        try:
+            roll1 = random.getrandbits(64)
+            game.socket.send(roll1.to_bytes(8, "big"))
+            data = game.socket.recv(1024)
+            roll2 = int.from_bytes(data, "big")
+
+            if roll1 > roll2:
+                game.player = "w"
+            elif roll2 > roll1:
+                game.player = "b"
+            else:
+                print("you win the lottery (1/2^128)")
+                exit()
+
+
+            game.receiving = False
+            data = game.socket.recv(1024)
+            game.receiving = True
+            while data:
+                effect, args = json.loads(data.decode())
+
+                game.ruleset.process_no_prop(effect, args)  # !
+
+                game.receiving = False
+                data = game.socket.recv(1024)
+                game.receiving = True
+        except:
+            traceback.print_exc()
+
+    def process(self, game, effect, args):
+        if effect == "init":
+            game.socket_thread = threading.Thread(target=lambda: self.run(game))
+            game.socket_thread.start()
+
+
+class SendRule(Rule):
+    def process(self, game, effect, args):
+        if not game.receiving:
+            game.socket.send(json.dumps((effect, args)).encode())
+
+
 class NormalTile:
     def __init__(self):
         self.piece = None
@@ -525,7 +607,12 @@ class Chess(Game):
         self.obj_count = 1
         self.board = SquareBoardWidget(self)
         self.turn = "w"
+        self.player = "bw"
         self.turn_num = 1
+
+        self.socket = None
+        self.socket_thread = None
+        self.receiving = True
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
@@ -534,6 +621,9 @@ class Chess(Game):
 
     def set_ruleset(self, ruleset):
         self.ruleset = ruleset
+
+    def set_socket(self, socket):
+        self.socket = socket
 
     def get_id(self, item):
         return next(k for k, v in self.object_map.items() if v == item)
@@ -578,15 +668,116 @@ class Chess(Game):
                 self.add_object(piece)
 
 
+class OnlineDialog(simpledialog.Dialog):
+    def __init__(self, parent):
+        simpledialog.Dialog.__init__(self, title="Online Chess", parent=parent)
+
+    def body(self, master):
+        self.raddr = tk.StringVar()
+        self.lport = tk.StringVar()
+        self.rport = tk.StringVar()
+        self.active = tk.BooleanVar()
+
+        addr_label = tk.Label(master, text="Address:", justify=tk.LEFT)
+        addr_entry = tk.Entry(master, textvariable=self.raddr)
+
+        local_label = tk.Label(master, text="Local port (empty defaults to remote port):", justify=tk.LEFT)
+        local_entry = tk.Entry(master, textvariable=self.lport)
+
+        remote_label = tk.Label(master, text="Remote port:", justify=tk.LEFT)
+        remote_entry = tk.Entry(master, textvariable=self.rport)
+
+        active_label = tk.Label(master, text="Active:", justify=tk.LEFT)
+        active_tickbox = tk.Checkbutton(master, variable=self.active)
+
+        addr_label.grid(row=0, column=0)
+        addr_entry.grid(row=0, column=1)
+
+        local_label.grid(row=1, column=0)
+        local_entry.grid(row=1, column=1)
+
+        remote_label.grid(row=2, column=0)
+        remote_entry.grid(row=2, column=1)
+
+        active_label.grid(row=3, column=0)
+        active_tickbox.grid(row=3, column=1)
+
+        return addr_entry
+
+    def validate(self):
+        addr, lport, rport, active = self.raddr.get(), self.lport.get(), self.rport.get(), self.active.get()
+        lport = int(lport) if lport else rport
+        rport = int(rport) if rport else rport
+
+        self.result = addr, lport, rport, active
+        print(self.result)
+        return True
+
+
+def make_socket(remote_address, remote_port, local_port=None, active=True):
+    if not local_port:
+        local_port = remote_port
+
+    s = socket.socket()
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    s.bind(("", local_port))
+
+    def listen(s, ret):
+        print("listening")
+        s.listen(0)
+        s, a = s.accept()
+        print("accepted", a)
+
+        ret.append((s, a))
+
+    if active:
+        print("trying to connect", (remote_address, remote_port))
+
+        while True:
+            try:
+                s.connect((remote_address, remote_port))
+                break
+            except:
+                traceback.print_exc()
+                print("retrying")
+                time.sleep(10)
+    else:
+        ret = []
+
+        t = threading.Thread(target=lambda: listen(s, ret))
+        t.start()
+
+        try:
+            while t.is_alive():
+                t.join(1)
+            s, a = ret[0]
+        except:
+            s.close()
+            t.join()
+            print("stopping listening")
+            return
+
+    print("connected")
+
+    return s
+
+
 def play_chess():
     chess = Chess()
 
+    dialog = OnlineDialog(chess)
+    addr, lport, rport, active = dialog.result
+
+    sock = make_socket(addr, lport, rport, active)
+
+    chess.set_socket(sock)
     chess.load_board_str("wa8Th8Tb8Pg8Pc8Lf8Ld8De8Ka7pb7pc7pd7pe7pf7pg7ph7p;ba1Th1Tb1Pg1Pc1Lf1Ld1De1Ka2pb2pc2pd2pe2pf2pg2ph2p")
 
     ruleset = Ruleset(chess)
     ruleset.add_rule(TouchMoveRule())
     ruleset.add_rule(IdMoveRule())
     ruleset.add_rule(MoveTurnRule())
+    ruleset.add_rule(MovePlayerRule())
     ruleset.add_rule(TakeRule())
     ruleset.add_rule(MoveTakeRule())
     ruleset.add_rule(FriendlyFireRule())
@@ -610,7 +801,13 @@ def play_chess():
 
     ruleset.add_rule(WinRule())
 
+    ruleset.add_rule(ReceiveRule())
+    ruleset.add_rule(SendRule())
+
     chess.set_ruleset(ruleset)
+    ruleset.process("init", ())
+
+    chess.board.redraw()
 
     chess.mainloop()
 
