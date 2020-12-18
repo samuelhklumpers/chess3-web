@@ -19,9 +19,11 @@ Part 2: How do I add a (simple) piece?
    
 2. Go to chess_rules.py, copy one of the existing move rules, replace the "K" in this line
 > if piece.shape == "K":
+   
    with the appearance you chose, and fill in your own logic for deciding the possibility of a move.
    At the end
 > return [(self.eout, args)]
+   
    to confirm the move.
    
 3. Go to game.py, and either copy play_chess or edit it directly, and inject your new rule into the list of piece rules in this section
