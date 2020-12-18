@@ -170,5 +170,48 @@ def play_chess():
     chess.mainloop()
 
 
+from fairy_rules import *
+
+
+def play_fairy_variant():
+    chess = Chess()
+
+    dialog = OnlineDialog(chess)
+    addr, lport, rport, active = dialog.result
+
+    sock = make_socket(addr, lport, rport, active)
+
+    chess.set_socket(sock)
+    chess.load_board_str("wa8Sh8Sb8Rg8Rc8Cf8Cd8]e8Ma7Fb7Fc7Fd7Fe7Ff7Fg7Fh7F;ba1Sh1Sb1Rg1Rc1Cf1Cd1]e1Ma2Fb2Fc2Fd2Fe2Ff2Fg2Fh2F")
+
+    ruleset = Ruleset(chess)
+
+    move_rules = [
+        [IdMoveRule], [MoveTurnRule], [MovePlayerRule], [FriendlyFireRule],
+        [FighterRule, RiderRule, KirinRule, SniperRule,
+         SquareRule, MasterRule]
+    ]
+
+    move0, move_rules, move1 = chain_rules(move_rules, "move")
+    actions = [TouchMoveRule(move0), TakeRule(), MoveTakeRule(move1), SetPieceRule(), RedrawRule(), NextTurnRule()]
+    post_move = [MovedRule(), PawnPostDouble()]
+    win_cond = [FairyWinRule(), WinCloseRule()]
+    network = [ReceiveRule(), SendRule(), CloseSocket()]
+
+    ruleset.add_all(move_rules)
+    ruleset.add_all(actions)
+    ruleset.add_all(post_move)
+    ruleset.add_all(win_cond)
+    ruleset.add_all(network)
+    ruleset.add_rule(ExitRule(), -1)
+
+    chess.set_ruleset(ruleset)
+    ruleset.process("init", ())
+
+    chess.board.redraw()
+
+    chess.mainloop()
+
+
 if __name__ == '__main__':
-    play_chess()
+    play_fairy_variant()
