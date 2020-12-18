@@ -465,6 +465,9 @@ class SendRule(Rule):
 class CloseSocket(Rule):
     def process(self, game, effect, args):
         if effect == "exit":
+            game.after(1000, lambda: self.close(game))
+
+    def close(self, game):
             try:
                 game.socket.shutdown(0)
                 game.socket.close()
@@ -478,4 +481,4 @@ class CloseSocket(Rule):
 class ExitRule(Rule):
     def process(self, game, effect, args):
         if effect == "exit":
-            game.after_idle(game.destroy)
+            game.after(2000, game.destroy)

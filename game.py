@@ -52,8 +52,17 @@ class OnlineDialog(simpledialog.Dialog):
 
     def validate(self):
         addr, lport, rport, active = self.raddr.get(), self.lport.get(), self.rport.get(), self.active.get()
-        lport = int(lport) if lport else rport
-        rport = int(rport) if rport else rport
+
+        if rport:
+            if lport:
+                ...
+            else:
+                lport = rport
+
+            lport = int(lport)
+            rport = int(rport)
+        else:
+            return False
 
         self.result = addr, lport, rport, active
         return True
