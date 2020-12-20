@@ -12,6 +12,7 @@ import itertools as itr
 
 from chess_rules import *
 from chess_structures import *
+from drawing import *
 
 
 class OnlineDialog(simpledialog.Dialog):
@@ -130,17 +131,16 @@ def chain_rules(steps, base):
     return intro, rules, out_effect
 
 
-def play_chess():
+def play_chess(online=True):
     chess = Chess()
 
-    dialog = OnlineDialog(chess)
-    addr, lport, rport, active = dialog.result
+    if online:
+        dialog = OnlineDialog(chess)
+        addr, lport, rport, active = dialog.result
 
-    sock = make_socket(addr, lport, rport, active)
+        sock = make_socket(addr, lport, rport, active)
 
-    chess.set_socket(sock)
-    chess.load_board_str("wa8Th8Tb8Pg8Pc8Lf8Ld8De8Ka7pb7pc7pd7pe7pf7pg7ph7p;ba1Th1Tb1Pg1Pc1Lf1Ld1De1Ka2pb2pc2pd2pe2pf2pg2ph2p")
-
+        chess.set_socket(sock)
     ruleset = Ruleset(chess)
 
     move_rules = [
@@ -150,22 +150,30 @@ def play_chess():
     ]
 
     move0, move_rules, move1 = chain_rules(move_rules, "move")
-    actions = [TouchMoveRule(move0), TakeRule(), MoveTakeRule(move1), SetPieceRule(), RedrawRule(), NextTurnRule()]
+    drawing = [DrawInitRule(), RedrawRule(), MarkRule(), SelectRule(), MarkCMAPRule(), DrawPieceRule()]
+    actions = [TouchMoveRule(move0), TakeRule(), MoveTakeRule(move1), SetPieceRule(), SetPlayerRule(), MoveRedrawRule(), NextTurnRule()]
     post_move = [MovedRule(), PawnPostDouble()]
     win_cond = [WinRule(), WinCloseRule()]
-    network = [ReceiveRule(), SendRule(), CloseSocket()]
+    network = [ReceiveRule(), SendRule([move1, "exit"]), CloseSocket()]
 
     ruleset.add_all(move_rules)
+    ruleset.add_all(drawing)
     ruleset.add_all(actions)
     ruleset.add_all(post_move)
     ruleset.add_all(win_cond)
-    ruleset.add_all(network)
+    if online:
+        ruleset.add_all(network)
     ruleset.add_rule(ExitRule(), -1)
+    ruleset.add_rule(CreatePieceRule())
+    ruleset.add_rule(CounterRule())
 
     chess.set_ruleset(ruleset)
+
+    chess.load_board_str("wa8Th8Tb8Pg8Pc8Lf8Ld8De8Ka7pb7pc7pd7pe7pf7pg7ph7p;ba1Th1Tb1Pg1Pc1Lf1Ld1De1Ka2pb2pc2pd2pe2pf2pg2ph2p")
     ruleset.process("init", ())
 
-    chess.board.redraw()
+
+    chess.geometry("600x600")
 
     chess.mainloop()
 
@@ -193,10 +201,10 @@ def play_fairy_variant():
     ]
 
     move0, move_rules, move1 = chain_rules(move_rules, "move")
-    actions = [TouchMoveRule(move0), TakeRule(), MoveTakeRule(move1), SetPieceRule(), RedrawRule(), NextTurnRule()]
+    actions = [TouchMoveRule(move0), TakeRule(), MoveTakeRule(move1), SetPieceRule(), MoveRedrawRule(), NextTurnRule()]
     post_move = [MovedRule(), PawnPostDouble()]
     win_cond = [FairyWinRule(), WinCloseRule()]
-    network = [ReceiveRule(), SendRule(), CloseSocket()]
+    network = [ReceiveRule(), SendRule([move0, "exit"]), CloseSocket()]
 
     ruleset.add_all(move_rules)
     ruleset.add_all(actions)
@@ -214,4 +222,4 @@ def play_fairy_variant():
 
 
 if __name__ == '__main__':
-    play_fairy_variant()
+    play_chess(online=True)

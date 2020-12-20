@@ -3,7 +3,7 @@ import random
 import threading
 import traceback
 
-from chess_structures import MovedPiece
+from chess_structures import MovedPiece, Pawn, Piece
 from util import *
 
 
@@ -23,12 +23,12 @@ class TouchMoveRule(Rule):
 
             if self.prev:
                 prev, self.prev = self.prev, None
-                return [(self.eout, (prev, args))]
+                return [(self.eout, (prev, args)), ("select", prev)]
             elif piece:
                 self.prev = args
+                return [("select", args)]
 
             return []
-
 
 class IdMoveRule(Rule):
     def __init__(self, ein, eout):
@@ -119,6 +119,23 @@ class TakeRule(Rule):
             return [("set_piece", (args, null_id)), ("takes", (null_id, taken_id, args, args))]
 
 
+class CreatePieceRule(Rule):
+    def process(self, game, effect, args):
+        if effect == "create_piece":
+            pos, col, shape = args
+
+            if shape in "KT":
+                piece = MovedPiece(shape, col)
+            elif shape in "p":
+                piece = Pawn(col)
+            else:
+                piece = Piece(shape, col)
+
+            piece_id = game.add_object(piece)
+
+            return [("set_piece", (pos, piece_id))]
+
+
 class SetPieceRule(Rule):
     def process(self, game, effect, args):
         if effect == "set_piece":
@@ -129,10 +146,10 @@ class SetPieceRule(Rule):
             return []
 
 
-class RedrawRule(Rule):
+class MoveRedrawRule(Rule):
     def process(self, game, effect, args):
         if effect == "moved":
-            game.after_idle(game.board.redraw)
+            return [("redraw", ())]
 
 
 class NextTurnRule(Rule):
@@ -388,6 +405,21 @@ class PawnPostDouble(Rule):
                     piece.double = game.get_turn_num()
 
 
+class CounterRule(Rule):
+    def process(self, game, effect, args):
+        if effect == "takes":
+            taken_id = args[1]
+            piece = game.get_from_id(taken_id)
+
+            if piece:
+                col, shape = piece.get_colour(), piece.shape
+
+                game.counter.increment(col, shape, -1)
+        elif effect == "create_piece":
+            _, col, shape = args
+            game.counter.increment(col, shape, 1)
+
+
 class WinRule(Rule):
     def process(self, game, effect, args):
         if effect == "takes":
@@ -403,11 +435,11 @@ class WinRule(Rule):
             alive = [col for col in kings if kings[col] > 0]
             n_alive = len(alive)
 
-            if n_alive > 1:
-                ...
-            elif n_alive == 1:
+            if n_alive == 1:
+                print(alive[0], "wins")
                 return [("wins", alive[0])]
-            else:
+            elif n_alive == 0:
+                print("draw")
                 return [("wins", None)]
 
 
@@ -415,6 +447,14 @@ class WinCloseRule(Rule):
     def process(self, game, effect, args):
         if effect == "wins":
             return [("exit", ())]
+
+
+class SetPlayerRule(Rule):
+    def process(self, game, effect, args):
+        if effect == "set_player":
+            game.player = args
+
+            print("you are playing as:", args)
 
 
 class ReceiveRule(Rule):
@@ -426,13 +466,15 @@ class ReceiveRule(Rule):
             roll2 = int.from_bytes(data, "big")
 
             if roll1 > roll2:
-                game.player = "w"
+                player = "w"
             elif roll2 > roll1:
-                game.player = "b"
+                player = "b"
             else:
                 print("you win the lottery (1/2^128)")  # that's pretty impressive
-                exit()
+                return
 
+            game.receiving = True
+            game.ruleset.process("set_player", player)
             game.receiving = False
             data = game.socket.recv(1024)
             game.receiving = True
@@ -440,7 +482,7 @@ class ReceiveRule(Rule):
                 for part in data.split(b";")[:-1]:
                     effect, args = json.loads(part.decode())
 
-                    game.ruleset.process(effect, args, prop=False)  # !
+                    game.ruleset.process(effect, args)
 
                 game.receiving = False
                 data = game.socket.recv(1024)
@@ -457,9 +499,15 @@ class ReceiveRule(Rule):
 
 
 class SendRule(Rule):
+    def __init__(self, whitelist=None):
+        if not whitelist:
+            whitelist = []
+        self.whitelist = whitelist
+
     def process(self, game, effect, args):
         if not game.receiving:
-            game.socket.send(json.dumps((effect, args)).encode() + b";")
+            if effect in self.whitelist:
+                game.socket.send(json.dumps((effect, args)).encode() + b";")
 
 
 class CloseSocket(Rule):
@@ -481,4 +529,5 @@ class CloseSocket(Rule):
 class ExitRule(Rule):
     def process(self, game, effect, args):
         if effect == "exit":
+            print("exiting")
             game.after(2000, game.destroy)

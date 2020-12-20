@@ -15,37 +15,52 @@ class SquareBoardWidget(tk.Canvas):
     def __init__(self, game, master=None):
         tk.Canvas.__init__(self, master=master)
 
-        self.nx, self.ny = 8, 8
-
         self.game = game
+
+        self.width = self.winfo_width()
+        self.height = self.winfo_height()
+
+        self.nx, self.ny = 8, 8
         self.tiles = np.full((self.nx, self.ny), None, dtype=object)
+        self.tile_tags = np.full((self.nx, self.ny), -1, dtype=int)
+        self.piece_tags = {}
 
         for ix, v in np.ndenumerate(self.tiles):
             self.tiles[ix] = NormalTile()
 
-        self.redraw()  # remove this and move to normal drawing rule
-
-        self.bind("<Expose>", self.redraw)
+        self.bind("<Configure>", self.resize)
         self.bind("<ButtonRelease-1>", self.left_release)
 
-    def redraw(self, event=None):
-        self.delete("all")
+    def resize(self, event):
+        sx, sy = float(event.width) / self.width, float(event.height) / self.height
+        self.width, self.height = event.width, event.height
+        self.scale("all", 0, 0, sx, sy)
 
+    def draw_tiles(self):
         w, h = self.winfo_width(), self.winfo_height()
         dx, dy = w / self.nx, h / self.ny
 
-        for ix, v in np.ndenumerate(self.tiles):
-            i, j = ix
+        for (i, j), v in np.ndenumerate(self.tiles):
             x, y = i * dx, j * dy
             parity = (i + j) % 2
 
             col = '#E2DA9C' if parity else '#AF8521'
-            self.create_rectangle(x, y, x + dx, y + dy, fill=col)
+            self.tile_tags[i, j] = self.create_rectangle(x, y, x + dx, y + dy, fill=col)
 
-            tile = self.tiles[ix]
-            if tile.piece:
-                col = "white" if tile.piece.col == "w" else "black"
-                self.create_text(x + dx/2, y + dy/2, text=tile.piece.shape, fill=col)
+    def draw_pieces(self):
+        w, h = self.winfo_width(), self.winfo_height()
+        dx, dy = w / self.nx, h / self.ny
+
+        for (i, j), v in np.ndenumerate(self.tiles):
+            x, y = i * dx, j * dy
+
+            tile = self.tiles[(i, j)]
+            piece = tile.piece
+            if piece:
+                col = "white" if piece.col == "w" else "black"
+                piece_id = self.game.get_id(piece)
+                tag = self.create_text(x + dx/2, y + dy/2, text=piece.shape, fill=col)
+                self.piece_tags[piece_id] = tag
 
     def click_to_tile(self, x, y):
         w, h = self.winfo_width(), self.winfo_height()
@@ -63,13 +78,57 @@ class SquareBoardWidget(tk.Canvas):
         return self.tiles[tuple(tile_i)]
 
 
+class PieceCounter(tk.Frame):
+    def __init__(self, master=None):
+        tk.Frame.__init__(self, master=master)
+
+        self.cmap = {"w": "white", "b": "black"}
+        self.players = {}
+        self.frames = {}
+        self.counts = {}
+
+    def increment(self, colour, shape, dn):
+        WEIRD_GREEN = "#00FF99"
+
+        if colour not in self.players:
+            self.players[colour] = {}
+            self.counts[colour] = {}
+            self.frames[colour] = frame = tk.Frame(self, bg=WEIRD_GREEN)
+            frame.pack(fill=tk.BOTH, expand=1)
+        player = self.players[colour]
+        counts = self.counts[colour]
+        frame = self.frames[colour]
+
+        if shape not in player:
+            player[shape] = 0
+
+            col = self.cmap[colour]
+
+            icon = tk.Label(frame, text=shape, bg=WEIRD_GREEN, fg=col)
+            count = tk.StringVar()
+            count.set("0")
+
+            count_label = tk.Label(frame, textvariable=count, bg=WEIRD_GREEN)
+            row = len(player)
+
+            icon.grid(row=row, column=0)
+            count_label.grid(row=row, column=1)
+
+            counts[shape] = [0, count]
+
+        var = counts[shape][1]
+        counts[shape][0] += dn
+        var.set(str(counts[shape][0]))
+        self.update()
+
+
 class Ruleset:
     def __init__(self, game):
         self.game = game
         self.rules = {}
         self.lock = threading.RLock()
 
-        self.debug = True
+        self.debug = False
 
     def add_rule(self, rule, prio=1):
         # 0 forbidden/debug
@@ -174,6 +233,7 @@ class Chess(Game):
         self.object_map = {0: None}
         self.obj_count = 1
         self.board = SquareBoardWidget(self)
+        self.counter = PieceCounter(self)
         self.turn = "w"
         self.player = "bw"
         self.turn_num = 1
@@ -185,7 +245,8 @@ class Chess(Game):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        self.board.grid(sticky="nsew")
+        self.board.grid(column=0, row=0, sticky="nsew")
+        self.counter.grid(column=1, row=0, sticky="nsew")
 
         self.protocol("WM_DELETE_WINDOW", lambda: self.ruleset.process("exit", ()))
 
@@ -202,8 +263,10 @@ class Chess(Game):
         return self.object_map[item_id]
 
     def add_object(self, item):
-        self.object_map[self.obj_count] = item
+        tag = self.obj_count
+        self.object_map[tag] = item
         self.obj_count += 1
+        return tag
 
     def process(self, effect, args):
         if self.ruleset:
@@ -218,21 +281,17 @@ class Chess(Game):
     def load_board_str(self, board_str):
         players = board_str.split(";")
 
+        create = []
         for player in players:
             col = player[0]
             pieces = player[1:]
             pieces = grouper(pieces, 3)
 
             for x, y, shape in pieces:
-                if shape in "KT":
-                    piece = MovedPiece(shape, col)
-                elif shape in "p":
-                    piece = Pawn(col)
-                else:
-                    piece = Piece(shape, col)
-
                 i = ord(x) - ord("a")
                 j = int(y) - 1
 
-                self.board.tiles[i, j].piece = piece
-                self.add_object(piece)
+                pos = (i, j)
+
+                create += [("create_piece", (pos, col, shape))]
+        self.ruleset.process_all(create)
