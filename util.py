@@ -25,3 +25,6 @@ def xyiter(x1, y1, x2, y2, incl_start=False, incl_end=False):
 
     if incl_end:
         yield x2, y2
+
+
+__all__ = ["grouper", "xyiter"]

@@ -1,22 +1,37 @@
 import os
 
-import PIL
 import numpy as np
 
 from PIL import Image
 from PIL import ImageTk
 
-from chess_rules import Rule
+from chess_structures import *
+from rules import *
+
+
+def fill_opaque(arr, col):
+    if len(col) == 3:
+        col = [*col, 255]
+
+    out = arr.copy()
+    out[out[..., -1] != 0] = col
+    return out
+
+
+def hex_to_rgb(value):
+    value = value.lstrip('#')
+    lv = len(value)
+    return tuple(int(value[i:i + lv // 3], 16) for i in range(0, lv, lv // 3))
 
 
 class DrawInitRule(Rule):
-    def process(self, game, effect, args):
+    def process(self, game: Chess, effect, args):
         if effect == "init":
             return [("redraw", ())]
 
 
 class RedrawRule(Rule):
-    def process(self, game, effect, args):
+    def process(self, game: Chess, effect, args):
         if effect == "redraw":
             board = game.board
             board.delete("all")
@@ -33,7 +48,7 @@ class SelectRule(Rule):
     def __init__(self):
         self.selected = None
 
-    def process(self, game, effect, args):
+    def process(self, game: Chess, effect, args):
         if effect == "select":
             ret = []
 
@@ -49,15 +64,6 @@ class SelectRule(Rule):
             return ret
 
 
-def fill_opaque(arr, col):
-    if len(col) == 3:
-        col = [*col, 255]
-
-    out = arr.copy()
-    out[out[..., -1] != 0] = col
-    return out
-
-
 class DrawPieceRule(Rule):
     def __init__(self):
         self.folder = "images"
@@ -68,15 +74,15 @@ class DrawPieceRule(Rule):
 
         self.refs = []  # Q: How do I create a memory leak? A: Like this.
 
-        for shape in self.files:
-            fn = os.path.join(self.folder, self.files[shape])
-            im = Image.open(fn)
-            im = im.resize((60, 60))
-            self.images[shape] = ImageTk.PhotoImage(im)
-            self.bitmaps[shape] = np.array(im)
-
-    def process(self, game, effect, args):
-        if effect == "draw_piece":
+    def process(self, game: Chess, effect, args):
+        if effect == "init":
+            for shape in self.files:
+                fn = os.path.join(self.folder, self.files[shape])
+                im = Image.open(fn)
+                im = im.resize((60, 60))
+                self.images[shape] = ImageTk.PhotoImage(im)
+                self.bitmaps[shape] = np.array(im)
+        elif effect == "draw_piece":
             pos, col = args
 
             board = game.board
@@ -114,7 +120,7 @@ class DrawPieceRule(Rule):
 class MarkCMAPRule(Rule):
     cmap = {"w": "#FFFFFF", "b": "#000000"}
 
-    def process(self, game, effect, args):
+    def process(self, game: Chess, effect, args):
         if effect == "mark_cmap":
             pos, col = args
 
@@ -130,14 +136,8 @@ class MarkCMAPRule(Rule):
                 return [("mark", (pos, col))]
 
 
-def hex_to_rgb(value):
-    value = value.lstrip('#')
-    lv = len(value)
-    return tuple(int(value[i:i + lv // 3], 16) for i in range(0, lv, lv // 3))
-
-
 class MarkRule(Rule):
-    def process(self, game, effect, args):
+    def process(self, game: Chess, effect, args):
         if effect == "mark":
             pos, col = args
 
@@ -153,3 +153,6 @@ class MarkRule(Rule):
                     return [("draw_piece", (pos, bitcol))]
                 elif board.type(tag) == "text":
                     board.itemconfig(tag, fill=col)
+
+
+__all__ = ['DrawInitRule', 'RedrawRule', 'SelectRule', 'fill_opaque', 'DrawPieceRule', 'MarkCMAPRule', 'hex_to_rgb', 'MarkRule']

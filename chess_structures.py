@@ -1,81 +1,7 @@
-import threading
-
 import tkinter as tk
-import numpy as np
 
+from structures import Tile, Board, Game
 from util import grouper
-
-
-class Game(tk.Tk):
-    def __init__(self):
-        tk.Tk.__init__(self, "game")
-
-
-class SquareBoardWidget(tk.Canvas):
-    def __init__(self, game, master=None):
-        tk.Canvas.__init__(self, master=master)
-
-        self.game = game
-
-        self.width = self.winfo_width()
-        self.height = self.winfo_height()
-
-        self.nx, self.ny = 8, 8
-        self.tiles = np.full((self.nx, self.ny), None, dtype=object)
-        self.tile_tags = np.full((self.nx, self.ny), -1, dtype=int)
-        self.piece_tags = {}
-
-        for ix, v in np.ndenumerate(self.tiles):
-            self.tiles[ix] = NormalTile()
-
-        self.bind("<Configure>", self.resize)
-        self.bind("<ButtonRelease-1>", self.left_release)
-
-    def resize(self, event):
-        sx, sy = float(event.width) / self.width, float(event.height) / self.height
-        self.width, self.height = event.width, event.height
-        self.scale("all", 0, 0, sx, sy)
-
-    def draw_tiles(self):
-        w, h = self.winfo_width(), self.winfo_height()
-        dx, dy = w / self.nx, h / self.ny
-
-        for (i, j), v in np.ndenumerate(self.tiles):
-            x, y = i * dx, j * dy
-            parity = (i + j) % 2
-
-            col = '#E2DA9C' if parity else '#AF8521'
-            self.tile_tags[i, j] = self.create_rectangle(x, y, x + dx, y + dy, fill=col)
-
-    def draw_pieces(self):
-        w, h = self.winfo_width(), self.winfo_height()
-        dx, dy = w / self.nx, h / self.ny
-
-        for (i, j), v in np.ndenumerate(self.tiles):
-            x, y = i * dx, j * dy
-
-            tile = self.tiles[(i, j)]
-            piece = tile.piece
-            if piece:
-                col = "white" if piece.col == "w" else "black"
-                piece_id = self.game.get_id(piece)
-                tag = self.create_text(x + dx/2, y + dy/2, text=piece.shape, fill=col)
-                self.piece_tags[piece_id] = tag
-
-    def click_to_tile(self, x, y):
-        w, h = self.winfo_width(), self.winfo_height()
-        dx, dy = w / self.nx, h / self.ny
-
-        return int(x / dx), int(y / dy)
-
-    def left_release(self, event=None):
-        self.create_oval(event.x, event.y, event.x + 2, event.y + 2, fill="red")
-
-        tile_i = self.click_to_tile(event.x, event.y)
-        self.game.process("touch", tile_i)
-
-    def get_tile(self, tile_i):
-        return self.tiles[tuple(tile_i)]
 
 
 class PieceCounter(tk.Frame):
@@ -122,73 +48,7 @@ class PieceCounter(tk.Frame):
         self.update()
 
 
-class Ruleset:
-    def __init__(self, game):
-        self.game = game
-        self.rules = {}
-        self.lock = threading.RLock()
-
-        self.debug = False
-
-    def add_rule(self, rule, prio=1):
-        # 0 forbidden/debug
-        # -1 forbidden/debug
-        self.rules.setdefault(prio, []).append(rule)
-
-    def add_all(self, rules, prio=1):
-        for rule in rules:
-            self.add_rule(rule, prio=prio)
-
-    def process_all(self, elist, prop=True):
-        try:
-            for effect, args in elist:
-                self.process(effect, args, prop=prop)
-        except ValueError as e:
-            raise e
-
-    def process(self, effect, args, prop=True):
-        with self.lock:
-            self._process(effect, args, prop=prop)
-
-    def _process(self, effect, args, prop=True):
-        if self.debug:
-            print(effect, args)
-
-        keys = list(self.rules.keys())
-
-        early = [k for k in keys if k >= 0]
-        late = [k for k in keys if k < 0]
-
-        early.sort()
-        late.sort()
-
-        # make corecursive
-        for k in early:
-            elist = []
-
-            for rule in self.rules[k]:
-                res = rule.process(self.game, effect, args)
-
-                if res:
-                    elist += res
-
-            if prop:
-                self.process_all(elist)
-
-        for k in late:
-            elist = []
-
-            for rule in self.rules[k]:
-                res = rule.process(self.game, effect, args)
-
-                if res:
-                    elist += res
-
-            if prop:
-                self.process_all(elist)
-
-
-class NormalTile:
+class NormalTile(Tile):
     def __init__(self):
         self.piece = None
 
@@ -229,10 +89,9 @@ class Chess(Game):
     def __init__(self):
         Game.__init__(self)
 
-        self.ruleset = None
         self.object_map = {0: None}
         self.obj_count = 1
-        self.board = SquareBoardWidget(self)
+        self.board = Board(game=self, master=self, tiles=NormalTile)
         self.counter = PieceCounter(self)
         self.turn = "w"
         self.player = "bw"
@@ -295,3 +154,6 @@ class Chess(Game):
 
                 create += [("create_piece", (pos, col, shape))]
         self.ruleset.process_all(create)
+
+
+__all__ = ["PieceCounter", "NormalTile", "Piece", "MovedPiece", "Pawn", "Chess"]

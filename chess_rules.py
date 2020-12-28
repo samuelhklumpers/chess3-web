@@ -1,100 +1,99 @@
 import json
 import random
-import threading
 import traceback
+import threading
 
-from chess_structures import MovedPiece, Pawn, Piece
-from util import *
+from typing import List
 
-
-class Rule:
-    def process(self, game, effect, args):
-        ...
+from rules import *
+from structures import *
+from chess_structures import *
 
 
 class TouchMoveRule(Rule):
-    def __init__(self, eout):
+    def __init__(self, consequence: str):
         self.prev = None
-        self.eout = eout
+        self.consequence = consequence
 
-    def process(self, game, effect, args):
+    def process(self, game: Chess, effect: str, args):  # args must be a tile identifier corresponding to the board
         if effect == "touch":
             piece = game.board.get_tile(args).get_piece()
 
             if self.prev:
                 prev, self.prev = self.prev, None
-                return [(self.eout, (prev, args)), ("select", prev)]
+                return [(self.consequence, (prev, args)), ("select", prev)]
             elif piece:
                 self.prev = args
                 return [("select", args)]
 
             return []
 
-class IdMoveRule(Rule):
-    def __init__(self, ein, eout):
-        self.ein = ein
-        self.eout = eout
 
-    def process(self, game, effect, args):
-        if effect == self.ein:
+class IdMoveRule(Rule):
+    def __init__(self, cause: str, consequence: str):
+        self.cause = cause
+        self.consequence = consequence
+
+    def process(self, game: Chess, effect: str, args):  # args must be a tuple of (two) tile identifiers
+        if effect == self.cause:
             if args[0] == args[1]:
                 return []
             else:
-                return [(self.eout, args)]
+                return [(self.consequence, args)]
 
 
 class MoveTurnRule(Rule):
-    def __init__(self, ein, eout):
-        self.ein = ein
-        self.eout = eout
+    def __init__(self, cause: str, consequence: str):
+        self.cause = cause
+        self.consequence = consequence
 
-    def process(self, game, effect, args):
-        if effect == self.ein:
+    def process(self, game: Chess, effect: str, args):
+        if effect == self.cause:
             piece = game.board.get_tile(args[0]).get_piece()
 
             if piece.get_colour() == game.get_turn():
-                return [(self.eout, args)]
+                return [(self.consequence, args)]
             else:
                 return []
 
 
 class MovePlayerRule(Rule):
-    def __init__(self, ein, eout):
-        self.ein = ein
-        self.eout = eout
+    def __init__(self, cause: str, consequence: str):
+        self.cause = cause
+        self.consequence = consequence
 
-    def process(self, game, effect, args):
-        if effect == self.ein:
+    def process(self, game: Chess, effect: str, args):
+        if effect == self.cause:
             piece = game.board.get_tile(args[0]).get_piece()
 
             if piece.get_colour() in game.player:
-                return [(self.eout, args)]
+                return [(self.consequence, args)]
             else:
                 return []
 
 
 class FriendlyFireRule(Rule):
-    def __init__(self, ein, eout):
-        self.ein = ein
-        self.eout = eout
+    def __init__(self, cause: str, consequence: str):
+        self.cause = cause
+        self.consequence = consequence
 
-    def process(self, game, effect, args):
-        if effect == self.ein:
+    def process(self, game: Chess, effect: str, args):
+        if effect == self.cause:
             moving_piece = game.board.get_tile(args[0]).get_piece()
             taken_piece = game.board.get_tile(args[1]).get_piece()
 
             if taken_piece and moving_piece.get_colour() == taken_piece.get_colour():
                 return
             else:
-                return [(self.eout, args)]
+                return [(self.consequence, args)]
 
 
 class MoveTakeRule(Rule):
-    def __init__(self, ein):
-        self.ein = ein
+    def __init__(self, cause: str):
+        self.cause = cause
 
-    def process(self, game, effect, args):
-        if effect == self.ein:
+    def process(self, game: Chess, effect: str, args):
+        if effect == self.cause:
             moving_piece = game.board.get_tile(args[0]).get_piece()
             taken_piece = game.board.get_tile(args[1]).get_piece()
 
@@ -111,7 +110,7 @@ class MoveTakeRule(Rule):
 
 
 class TakeRule(Rule):
-    def process(self, game, effect, args):
+    def process(self, game: Chess, effect: str, args):
         if effect == "take":
             taken_piece = game.board.get_tile(args).get_piece()
             null_id = game.get_id(None)
@@ -120,7 +119,7 @@ class TakeRule(Rule):
 
 
 class CreatePieceRule(Rule):
-    def process(self, game, effect, args):
+    def process(self, game: Chess, effect: str, args):
         if effect == "create_piece":
             pos, col, shape = args
 
@@ -137,7 +136,7 @@ class CreatePieceRule(Rule):
 
 
 class SetPieceRule(Rule):
-    def process(self, game, effect, args):
+    def process(self, game: Chess, effect: str, args):  # args must be a tuple of (two) object identifiers corresponding to the game
         if effect == "set_piece":
             piece = game.get_from_id(args[1])
 
@@ -147,29 +146,20 @@ class SetPieceRule(Rule):
 
 
 class MoveRedrawRule(Rule):
-    def process(self, game, effect, args):
+    def process(self, game: Chess, effect: str, args):
         if effect == "moved":
             return [("redraw", ())]
 
 
 class NextTurnRule(Rule):
-    def process(self, game, effect, args):
+    def process(self, game: Chess, effect: str, args):
         if effect == "moved":
             game.turn = "b" if game.turn == "w" else "w"
             game.turn_num += 1
 
 
-def unpack2ddr(args):
-        x1, y1 = args[0]
-        x2, y2 = args[1]
-
-        dx, dy = x2 - x1, y2 - y1
-
-        return dx, dy
-
-
 class AnyRule(Rule):  # warning: ordering side effect
-    def __init__(self, rules):
+    def __init__(self, rules: List[Rule]):
         self.rules = rules
 
     def process(self, game, effect, args):
@@ -180,212 +170,8 @@ class AnyRule(Rule):  # warning: ordering side effect
                 return elist
 
 
-class PawnSingleRule(Rule):
-    def __init__(self, ein, eout):
-        self.ein = ein
-        self.eout = eout
-
-    def process(self, game, effect, args):
-        if effect == self.ein:
-            piece = game.board.get_tile(args[0]).get_piece()
-            if piece.shape == "p":
-                dx, dy = unpack2ddr(args)
-
-                d = -1 if piece.get_colour() == "w" else 1
-
-                if dx == 0 and dy == d and not game.board.get_tile(args[1]).get_piece():
-                    return [(self.eout, args)]
-
-
-class PawnDoubleRule(Rule):
-    def __init__(self, ein, eout):
-        self.ein = ein
-        self.eout = eout
-
-    def process(self, game, effect, args):
-        if effect == self.ein:
-            piece = game.board.get_tile(args[0]).get_piece()
-            if piece.shape == "p":
-                dx, dy = unpack2ddr(args)
-
-                d = -1 if piece.get_colour() == "w" else 1
-
-                if dx == 0 and dy == 2 * d and piece.moved == 0 and not game.board.get_tile(args[1]).get_piece():
-                    return [(self.eout, args)]
-
-
-class PawnTakeRule(Rule):
-    def __init__(self, ein, eout):
-        self.ein = ein
-        self.eout = eout
-
-    def process(self, game, effect, args):
-        if effect == self.ein:
-            piece = game.board.get_tile(args[0]).get_piece()
-            if piece.shape == "p":
-                dx, dy = unpack2ddr(args)
-
-                d = -1 if piece.get_colour() == "w" else 1
-
-                if abs(dx) == 1 and dy == d:
-                    if game.board.get_tile(args[1]).get_piece():
-                        return [(self.eout, args)]
-
-
-class PawnEnPassantRule(Rule):  # warning: will generate duplicate moves when pawns pass through pieces on a double move
-    def __init__(self, ein, eout):
-        self.ein = ein
-        self.eout = eout
-
-    def process(self, game, effect, args):
-        if effect == self.ein:
-            piece = game.board.get_tile(args[0]).get_piece()
-            if piece.shape == "p":
-                dx, dy = unpack2ddr(args)
-
-                d = -1 if piece.get_colour() == "w" else 1
-
-                if abs(dx) == 1 and dy == d:
-                    x1, y1 = args[0]
-                    x3, y3 = x1 + dx, y1
-
-                    other = game.board.get_tile((x3, y3)).get_piece()
-                    if other and other.shape == "p" and other.double == game.get_turn_num():
-                        return [(self.eout, args), ("take", (x3, y3))]
-
-
-class KnightRule(Rule):
-    def __init__(self, ein, eout):
-        self.ein = ein
-        self.eout = eout
-
-    def process(self, game, effect, args):
-        if effect == self.ein:
-            piece = game.board.get_tile(args[0]).get_piece()
-            if piece.shape == "P":
-                dx, dy = unpack2ddr(args)
-
-                if abs(dx * dy) == 2:
-                    return [(self.eout, args)]
-
-
-class BishopRule(Rule):
-    def __init__(self, ein, eout):
-        self.ein = ein
-        self.eout = eout
-
-    def process(self, game, effect, args):
-        if effect == self.ein:
-            piece = game.board.get_tile(args[0]).get_piece()
-            if piece.shape == "L":
-                x1, y1 = args[0]
-                x2, y2 = args[1]
-
-                dx, dy = x2 - x1, y2 - y1
-
-                if abs(dx) == abs(dy):
-                    for x, y in xyiter(x1, y1, x2, y2):
-                        if game.board.get_tile((x, y)).get_piece():
-                            return
-
-                    return [(self.eout, args)]
-
-
-class RookRule(Rule):
-    def __init__(self, ein, eout):
-        self.ein = ein
-        self.eout = eout
-
-    def process(self, game, effect, args):
-        if effect == self.ein:
-            piece = game.board.get_tile(args[0]).get_piece()
-            if piece.shape == "T":
-                x1, y1 = args[0]
-                x2, y2 = args[1]
-
-                dx, dy = x2 - x1, y2 - y1
-
-                if dx * dy == 0:
-                    for x, y in xyiter(x1, y1, x2, y2):
-                        if game.board.get_tile((x, y)).get_piece():
-                            return
-
-                    return [(self.eout, args)]
-
-
-class QueenRule(Rule):
-    def __init__(self, ein, eout):
-        self.ein = ein
-        self.eout = eout
-
-    def process(self, game, effect, args):
-        if effect == self.ein:
-            piece = game.board.get_tile(args[0]).get_piece()
-            if piece.shape == "D":
-                x1, y1 = args[0]
-                x2, y2 = args[1]
-
-                dx, dy = x2 - x1, y2 - y1
-
-                if dx * dy == 0 or abs(dx) == abs(dy):
-                    for x, y in xyiter(x1, y1, x2, y2):
-                        if game.board.get_tile((x, y)).get_piece():
-                            return
-
-                    return [(self.eout, args)]
-
-
-class KingRule(Rule):
-    def __init__(self, ein, eout):
-        self.ein = ein
-        self.eout = eout
-
-    def process(self, game, effect, args):
-        if effect == self.ein:
-            piece = game.board.get_tile(args[0]).get_piece()
-            if piece.shape == "K":
-                dx, dy = unpack2ddr(args)
-
-                if abs(dx) <= 1 and abs(dy) <= 1:
-                    return [(self.eout, args)]
-
-
-class CastleRule(Rule):
-    def __init__(self, ein, eout):
-        self.ein = ein
-        self.eout = eout
-
-    def process(self, game, effect, args):
-        if effect == self.ein:
-            piece = game.board.get_tile(args[0]).get_piece()
-            if piece.shape == "K":
-                if piece.moved > 0:
-                    return
-
-                x1, y1 = args[0]
-                x2, y2 = args[1]
-
-                dx, dy = x2 - x1, y2 - y1
-
-                if abs(dx) == 2 and dy <= 0:
-                    if dx < 0:
-                        other = (x1 - 4, y1)
-                        end = (x1 - 1, y1)
-                        rook = game.board.get_tile(other).get_piece()
-                    else:
-                        other = (x1 + 3, y1)
-                        end = (x1 + 1, y1)
-                        rook = game.board.get_tile(other).get_piece()
-
-                    if rook and rook.moved == 0:
-                        game.turn = "b" if game.turn == "w" else "w"
-                        game.turn_num -= 1 # minor hack because making two moves screws up parity
-
-                        return [(self.eout, args), (self.eout, (other, end))]
-
-
 class MovedRule(Rule):
-    def process(self, game, effect, args):
+    def process(self, game: Chess, effect: str, args):
         if effect == "moved":
             piece = game.get_from_id(args[0])
 
@@ -393,20 +179,8 @@ class MovedRule(Rule):
                 piece.moved = game.get_turn_num()
 
 
-class PawnPostDouble(Rule):
-    def process(self, game, effect, args):
-        if effect == "moved":
-            piece = game.get_from_id(args[0])
-
-            if piece.shape == "p":
-                dx, dy = unpack2ddr(args[1:])
-
-                if abs(dy) == 2:
-                    piece.double = game.get_turn_num()
-
-
 class CounterRule(Rule):
-    def process(self, game, effect, args):
+    def process(self, game: Chess, effect: str, args):
         if effect == "takes":
             taken_id = args[1]
             piece = game.get_from_id(taken_id)
@@ -421,7 +195,7 @@ class CounterRule(Rule):
 
 
 class WinRule(Rule):
-    def process(self, game, effect, args):
+    def process(self, game: Chess, effect: str, args):
         if effect == "takes":
             kings = {}
 
@@ -444,13 +218,13 @@ class WinRule(Rule):
 
 
 class WinCloseRule(Rule):
-    def process(self, game, effect, args):
+    def process(self, game: Game, effect: str, args):
         if effect == "wins":
             return [("exit", ())]
 
 
 class SetPlayerRule(Rule):
-    def process(self, game, effect, args):
+    def process(self, game: Chess, effect: str, args):
         if effect == "set_player":
             game.player = args
 
@@ -458,7 +232,7 @@ class SetPlayerRule(Rule):
 
 
 class ReceiveRule(Rule):
-    def run(self, game):
+    def run(self, game: Chess):
         try:
             roll1 = random.getrandbits(64)
             game.socket.send(roll1.to_bytes(8, "big"))
@@ -492,30 +266,28 @@ class ReceiveRule(Rule):
         except:
             traceback.print_exc()
 
-    def process(self, game, effect, args):
+    def process(self, game: Chess, effect: str, args):
         if effect == "init":
             game.socket_thread = threading.Thread(target=lambda: self.run(game))
             game.socket_thread.start()
 
 
 class SendRule(Rule):
-    def __init__(self, whitelist=None):
-        if not whitelist:
-            whitelist = []
+    def __init__(self, whitelist: List[Rule]):
         self.whitelist = whitelist
 
-    def process(self, game, effect, args):
+    def process(self, game: Game, effect: str, args):
         if not game.receiving:
             if effect in self.whitelist:
                 game.socket.send(json.dumps((effect, args)).encode() + b";")
 
 
 class CloseSocket(Rule):
-    def process(self, game, effect, args):
+    def process(self, game: Game, effect: str, args):
         if effect == "exit":
             game.after(1000, lambda: self.close(game))
 
-    def close(self, game):
+    def close(self, game: Game):
             try:
                 game.socket.shutdown(0)
                 game.socket.close()
@@ -527,7 +299,12 @@ class CloseSocket(Rule):
 
 
 class ExitRule(Rule):
-    def process(self, game, effect, args):
+    def process(self, game: Game, effect: str, args):
         if effect == "exit":
             print("exiting")
             game.after(2000, game.destroy)
+
+
+__all__ = ['TouchMoveRule', 'IdMoveRule', 'MoveTurnRule', 'MovePlayerRule', 'FriendlyFireRule', 'MoveTakeRule',
+           'TakeRule', 'CreatePieceRule', 'SetPieceRule', 'MoveRedrawRule', 'NextTurnRule', 'AnyRule', 'MovedRule',
+           'CounterRule', 'WinRule', 'WinCloseRule', 'SetPlayerRule', 'ReceiveRule', 'SendRule', 'CloseSocket', 'ExitRule']
