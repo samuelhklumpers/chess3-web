@@ -136,13 +136,13 @@ class CreatePieceRule(Rule):
 
 
 class SetPieceRule(Rule):
-    def process(self, game: Chess, effect: str, args):  # args must be a tuple of (two) object identifiers corresponding to the game
+    def process(self, game: Chess, effect: str, args):  # args must be a tuple of (tile identifier, object identifier)
         if effect == "set_piece":
             piece = game.get_from_id(args[1])
 
             game.board.get_tile(args[0]).set_piece(piece)
 
-            return []
+            return [("piece_set", args)]
 
 
 class MoveRedrawRule(Rule):

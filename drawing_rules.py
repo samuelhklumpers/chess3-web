@@ -39,7 +39,7 @@ class RedrawRule(Rule):
 
             draw_list = []
             for ix, v in np.ndenumerate(board.tiles):
-                draw_list += [("draw_piece", (ix, None)), ("mark_cmap", (ix, "normal"))]
+                draw_list += [("draw_piece", ix)]#, ("mark_cmap", (ix, "normal"))]
 
             return draw_list
 
@@ -64,57 +64,144 @@ class SelectRule(Rule):
             return ret
 
 
-class DrawPieceRule(Rule):
+class DrawSetPieceRule(Rule):
+    def process(self, game: Chess, effect: str, args):
+        if effect == "piece_set":
+            pos, piece_id = args
+
+            piece = game.get_from_id(piece_id)
+
+            shape = piece.shape if piece else ""
+            col = piece.get_colour() if piece else ""
+
+            return [("draw_piece_at_cmap", (pos, shape, col))]
+
+
+class DrawPieceCMAPRule(Rule):
+    cmap = {"w": "#FFFFFF", "b": "#000000"}
+
+    def process(self, game: Chess, effect, args):
+        if effect == "draw_piece_at_cmap":
+            pos, shape, col = args
+
+            if col in self.cmap:
+                col = self.cmap[col]
+
+            return [("draw_piece_at", (pos, shape, col))]
+
+
+class DrawPieceRule(Rule):  # parametrize
     def __init__(self):
         self.folder = "images"
         self.files = {"K": "king.png", "D": "queen.png", "T": "rook.png",
                       "L": "bishop.png", "P": "knight.png", "p": "pawn.png"}
         self.bitmaps = {}
         self.images = {}
+        self.photos = {}
 
-        self.refs = []  # Q: How do I create a memory leak? A: Like this.
+        self.copies = {}  # by tile
+
+    def load_shape(self, shape):
+        if shape in self.photos and "" in self.photos[shape]:
+            return self.photos[shape][""], self.bitmaps[shape][""]
+        else:
+            fn = os.path.join(self.folder, self.files[shape])
+            im = Image.open(fn)
+            im = im.resize((60, 60))
+            photo = ImageTk.PhotoImage(im)
+            self.photos.setdefault(shape, {}).setdefault("", photo)
+            self.images.setdefault(shape, {}).setdefault("", im)
+            arr = np.array(im)
+            self.bitmaps.setdefault(shape, {}).setdefault("", arr)
+
+            return photo, arr
+
+    def load_colour(self, shape, col):
+        if shape in self.photos and col in self.photos[shape]:
+            return self.photos[shape][col]
+        else:
+            _, arr = self.load_shape(shape)
+            col = hex_to_rgb(col)
+            arr = fill_opaque(arr, col)
+            im = Image.fromarray(arr)
+            photo = ImageTk.PhotoImage(im)
+
+            self.photos[shape][col] = photo
+            self.images[shape][col] = im
+            self.bitmaps[shape][col] = arr
+
+            return photo, im
+
+    def draw_image(self, game, pos, shape, col):
+        self.undraw(game, pos)
+
+        board = game.board
+        i, j = pos
+        w, h = board.winfo_width(), board.winfo_height()
+        dx, dy = w / board.nx, h / board.ny
+        x, y = i * dx, j * dy
+
+        _, im = self.load_colour(shape, col)
+
+        photo = ImageTk.PhotoImage(im)
+
+        tag = board.create_image(x + dx / 2, y + dy / 2, image=photo)
+
+        self.copies[(i, j)] = photo
+        board.piece_tags[(i, j)] = tag
+
+    def draw_text(self, game, pos, shape, col):
+        self.undraw(game, pos)
+
+        board = game.board
+        i, j = pos
+        w, h = board.winfo_width(), board.winfo_height()
+        dx, dy = w / board.nx, h / board.ny
+        x, y = i * dx + dx/2, j * dy + dy/2
+
+        if col:
+            tag = board.create_text(x, y, text=shape, fill=col)
+        else:
+            tag = board.create_text(x, y, text=shape)
+
+        board.piece_tags[(i, j)] = tag
+
+    def undraw(self, game, pos):
+        board = game.board
+
+        pos = tuple(pos)
+
+        tag = board.piece_tags.get(pos, None)
+
+        if tag is not None:
+            board.delete(tag)
+            del board.piece_tags[pos]
+
+        if pos in self.copies:
+            del self.copies[pos]
 
     def process(self, game: Chess, effect, args):
-        if effect == "init":
-            for shape in self.files:
-                fn = os.path.join(self.folder, self.files[shape])
-                im = Image.open(fn)
-                im = im.resize((60, 60))
-                self.images[shape] = ImageTk.PhotoImage(im)
-                self.bitmaps[shape] = np.array(im)
-        elif effect == "draw_piece":
-            pos, col = args
-
-            board = game.board
-            piece = board.get_tile(pos).get_piece()
+        if effect == "draw_piece":
+            print(args)
+            piece = game.board.get_tile(args).piece
 
             if piece:
-                i, j = pos
-                w, h = board.winfo_width(), board.winfo_height()
-                dx, dy = w / board.nx, h / board.ny
-                x, y = i * dx, j * dy
-
                 shape = piece.shape
+                col = piece.get_colour()
+            else:
+                shape = col = ""
 
-                piece_id = game.get_id(piece)
+            return [("draw_piece_at_cmap", (args, shape, col))]
+        elif effect == "draw_piece_at":
+            pos, shape, col = args
 
-                if shape in self.images:
-                    if col is not None:
-                        arr = self.bitmaps[shape]
-                        arr = fill_opaque(arr, col)
-                        im = Image.fromarray(arr)
-                        self.refs += [im]
-                        rep = ImageTk.PhotoImage(im)
-                        self.refs += [rep]
-                        tag = board.create_image(x + dx/2, y + dy/2, image=rep)
-                    else:
-                        rep = self.images[shape]
-                        tag = board.create_image(x + dx/2, y + dy/2, image=rep)
-                else:
-                    rep = shape
-                    tag = board.create_text(x + dx/2, y + dy/2, text=rep)
-
-                board.piece_tags[piece_id] = tag
+            # don't put None in files unless you want something fun to happen
+            if shape in self.files:  # draw image
+                self.draw_image(game, pos, shape, col)
+            elif shape:  # draw text
+                self.draw_text(game, pos, shape, col)
+            else:  # undraw
+                self.undraw(game, pos)
 
 
 class MarkCMAPRule(Rule):
@@ -145,14 +232,13 @@ class MarkRule(Rule):
             piece = board.get_tile(pos).get_piece()
 
             if piece:
-                piece_id = game.get_id(piece)
-                tag = board.piece_tags[piece_id]
+                tag = board.piece_tags[pos]
 
                 if board.type(tag) == "image":
-                    bitcol = hex_to_rgb(col)
-                    return [("draw_piece", (pos, bitcol))]
+                    return [("draw_piece_at_cmap", (pos, piece.shape, col))]
                 elif board.type(tag) == "text":
                     board.itemconfig(tag, fill=col)
 
 
-__all__ = ['DrawInitRule', 'RedrawRule', 'SelectRule', 'fill_opaque', 'DrawPieceRule', 'MarkCMAPRule', 'hex_to_rgb', 'MarkRule']
+__all__ = ['DrawInitRule', 'RedrawRule', 'SelectRule', 'fill_opaque', 'DrawPieceRule', 'MarkCMAPRule', 'hex_to_rgb',
+           'MarkRule', 'DrawSetPieceRule', 'DrawPieceCMAPRule']

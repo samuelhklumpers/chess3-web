@@ -9,7 +9,7 @@ from drawing_rules import *
 from online import *
 
 
-DRAWING_RULES = [DrawInitRule(), RedrawRule(), MarkRule(), SelectRule(), MarkCMAPRule(), DrawPieceRule()]
+DRAWING_RULES = [DrawInitRule(), RedrawRule(), MarkRule(), SelectRule(), MarkCMAPRule(), DrawPieceRule(), DrawSetPieceRule(), DrawPieceCMAPRule()]
 WIN_RULES = [WinRule(), WinCloseRule()]
 COMMON_RULES = DRAWING_RULES + WIN_RULES
 
@@ -20,7 +20,7 @@ NETWORK_RULES = [ReceiveRule(), CloseSocket()]
 
 def make_actions(move_start: str, move_finish: str):
     return [TouchMoveRule(move_start), TakeRule(), MoveTakeRule(move_finish),
-            SetPieceRule(), SetPlayerRule(), MoveRedrawRule(), NextTurnRule()]
+            SetPieceRule(), SetPlayerRule(), NextTurnRule()]
 
 
 def make_online(chess: Chess, whitelist: List[Rule]):
@@ -46,6 +46,7 @@ def play_chess(online=True):
     move0, move_rules, move1 = chain_rules(move_rules, "move")  # arrange the movement requirements
                                                                 # in a chain of consequences
     actions = make_actions(move0, move1)  # setup normal user interactions
+    actions += [DrawSetPieceRule()]
 
     post_move = [MovedRule(), PawnPostDouble()]  # special rules for pawn, rook and king
 
