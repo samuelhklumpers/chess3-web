@@ -1,9 +1,3 @@
-import json
-import random
-import threading
-import traceback
-
-from chess_structures import MovedPiece
 from chess_rules import Rule
 from util import *
 
@@ -17,7 +11,7 @@ def unpack2ddr(args):
         return dx, dy
 
 
-class FighterRule(Rule):
+class FerzRule(Rule):
     def __init__(self, ein, eout):
         self.ein = ein
         self.eout = eout
@@ -28,16 +22,11 @@ class FighterRule(Rule):
             if piece.shape == "F":
                 dx, dy = unpack2ddr(args)
 
-                d = -1 if piece.get_colour() == "w" else 1
-
-                if abs(dx) <= 1 and dy == d and game.board.get_tile(args[1]).get_piece():
-                    return [(self.eout, args)]
-
-                if dx == 0 and dy == 2 * d and not game.board.get_tile(args[1]).get_piece():
+                if abs(dx) == abs(dy) == 1:
                     return [(self.eout, args)]
 
 
-class RiderRule(Rule):
+class JumperRule(Rule):
     def __init__(self, ein, eout):
         self.ein = ein
         self.eout = eout
@@ -45,11 +34,26 @@ class RiderRule(Rule):
     def process(self, game, effect, args):
         if effect == self.ein:
             piece = game.board.get_tile(args[0]).get_piece()
-            if piece.shape == "R":
-                dx, dy = unpack2ddr(args)
+            if piece.shape == "J":
+                x1, y1 = args[0]
+                x2, y2 = args[1]
 
-                if abs(dx * dy) == 2 or abs(dx * dy) == 8:
-                    return [(self.eout, args)]
+                dx, dy = x2 - x1, y2 - y1
+
+                if game.board.get_tile(args[1]).get_piece():
+                    return
+
+                if (dx * dy == 0 or abs(dx) == abs(dy)) and max(abs(dx), abs(dy)) == 2:
+                    x3, y3 = x1 + dx // 2, y1 + dy // 2
+
+                    piece2 = game.board.get_tile((x3, y3)).get_piece()
+
+                    elist = [(self.eout, args)]
+
+                    if piece2 and piece.get_colour() != piece2.get_colour():
+                        elist += [("take", (x3, y3))]
+
+                    return elist
 
 
 class KirinRule(Rule):
@@ -70,7 +74,7 @@ class KirinRule(Rule):
                     return [(self.eout, args)]
 
 
-class SniperRule(Rule):
+class ShooterRule(Rule):
     def __init__(self, ein, eout):
         self.ein = ein
         self.eout = eout
@@ -86,19 +90,21 @@ class SniperRule(Rule):
 
                 dx, dy = x2 - x1, y2 - y1
 
-                if dx * dy == 0:
+                if dx * dy == 0 and abs(dx + dy) < 5:
+                    can_fire = True
                     for x, y in xyiter(x1, y1, x2, y2):
                         if game.board.get_tile((x, y)).get_piece():
-                            return
+                            can_fire = False
 
-                    if game.board.get_tile((x2, y2)):
-                        return [("take", (x2, y2)), ("moved", (moving_id, args[0], args[0]))]
+                    if can_fire and game.board.get_tile((x2, y2)).get_piece():
+                        return [("take", (x2, y2)), (self.eout, (args[0], args[0]))]
 
                 if max(abs(dx), abs(dy)) == 1:
-                    return [(self.eout, args)]
+                    if not game.board.get_tile((x2, y2)).get_piece():
+                        return [(self.eout, args)]
 
 
-class SquareRule(Rule):
+class WheelRule(Rule):
     def __init__(self, ein, eout):
         self.ein = ein
         self.eout = eout
@@ -106,49 +112,17 @@ class SquareRule(Rule):
     def process(self, game, effect, args):
         if effect == self.ein:
             piece = game.board.get_tile(args[0]).get_piece()
-            if piece.shape == "]":
+            if piece.shape == "W":
                 x1, y1 = args[0]
                 x2, y2 = args[1]
 
                 dx, dy = x2 - x1, y2 - y1
 
-                if max(abs(dx), abs(dy)) <= 3:
+                if dx * dy == 0 and abs(dx + dy) < 4:
+                    return [(self.eout, args)]
+
+                if abs(dx * dy) == 2:
                     return [(self.eout, args)]
 
 
-class MasterRule(Rule):
-    def __init__(self, ein, eout):
-        self.ein = ein
-        self.eout = eout
-
-    def process(self, game, effect, args):
-        if effect == self.ein:
-            piece = game.board.get_tile(args[0]).get_piece()
-            if piece.shape == "M":
-                dx, dy = unpack2ddr(args)
-
-                if abs(dx) <= 1 and abs(dy) <= 1 or (dy == 0 and abs(dx) == 3):
-                    return [(self.eout, args)]
-
-
-class FairyWinRule(Rule):
-    def process(self, game, effect, args):
-        if effect == "takes":
-            kings = {}
-
-            for tile in game.board.tiles.flat:
-                piece = tile.get_piece()
-
-                if piece and piece.shape == "M":
-                    kings.setdefault(piece.get_colour(), 0)
-                    kings[piece.get_colour()] += 1
-
-            alive = [col for col in kings if kings[col] > 0]
-            n_alive = len(alive)
-
-            if n_alive > 1:
-                ...
-            elif n_alive == 1:
-                return [("wins", alive[0])]
-            else:
-                return [("wins", None)]
+__all__ = ['FerzRule', 'JumperRule', 'KirinRule', 'ShooterRule', 'WheelRule']

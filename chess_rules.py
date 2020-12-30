@@ -103,11 +103,14 @@ class MoveTakeRule(Rule):
             taken_id = game.get_id(taken_piece)
             null_id = game.get_id(None)
 
-            elist = [("set_piece", (args[1], moving_id))]
-            elist += [("set_piece", (args[0], null_id))]
+            elist = []
+
+            if args[0] != args[1]:
+                elist += [("set_piece", (args[1], moving_id))]
+                elist += [("set_piece", (args[0], null_id))]
+                elist += [("takes", (moving_id, taken_id, args[0], args[1]))]
             elist += [("move_success", ())]  # redundant, but useful later for signalling tolerable inputs
             elist += [("moved", (moving_id, args[0], args[1]))]
-            elist += [("takes", (moving_id, taken_id, args[0], args[1]))]
 
             return elist
 
@@ -116,6 +119,7 @@ class TakeRule(Rule):
     def process(self, game: Chess, effect: str, args):
         if effect == "take":
             taken_piece = game.board.get_tile(args).get_piece()
+            print(taken_piece)
             null_id = game.get_id(None)
             taken_id = game.get_id(taken_piece)
             return [("set_piece", (args, null_id)), ("takes", (null_id, taken_id, args, args))]

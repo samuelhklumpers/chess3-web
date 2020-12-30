@@ -94,7 +94,9 @@ class DrawPieceRule(Rule):  # parametrize
     def __init__(self):
         self.folder = "images"
         self.files = {"K": "king.png", "D": "queen.png", "T": "rook.png",
-                      "L": "bishop.png", "P": "knight.png", "p": "pawn.png"}
+                      "L": "bishop.png", "P": "knight.png", "p": "pawn.png",
+                      "F": "ferz.png", "J": "jumper.png", "C": "kirin.png",
+                      "S": "shooter.png", "W": "wheel.png"}
         self.bitmaps = {}
         self.images = {}
         self.photos = {}

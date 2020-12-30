@@ -87,7 +87,7 @@ class Ruleset:
         self.rules = {}
         self.lock = threading.RLock()
 
-        self.debug = False
+        self.debug = True
 
     def add_rule(self, rule, prio=1):
         # 0 forbidden/debug

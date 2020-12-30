@@ -77,32 +77,47 @@ def play_chess(online=True, playback="", record=True):
     chess.mainloop()  # start the game
 
 
-def play_fairy_variant():
+def play_fairy_variant(online=True, playback="", record=True):
     chess = Chess()
 
     ruleset = chess.ruleset
 
-    move_rules = MOVE_RULES + [[FighterRule, RiderRule, KirinRule, SniperRule, SquareRule, KingRule]]
-
+    move_rules = MOVE_RULES + [[FerzRule, JumperRule, KirinRule, ShooterRule, WheelRule, KingRule]]
     move0, move_rules, move1 = chain_rules(move_rules, "move")
-    actions = [TouchMoveRule(move0), TakeRule(), MoveTakeRule(move1), SetPieceRule(), MoveRedrawRule(), NextTurnRule()]
-    post_move = [MovedRule(), PawnPostDouble()]
 
-    make_online(chess, [move0, "exit"])
+    actions = make_actions(move0, move1)
+    actions += [DrawSetPieceRule()]
 
+    post_move = [MovedRule(), PawnPostDouble(),
+                 PromoteRule(["F"], ["J", "C", "S", "W"])]
     ruleset.add_all(move_rules)
     ruleset.add_all(COMMON_RULES)
     ruleset.add_all(actions)
     ruleset.add_all(post_move)
+
     ruleset.add_rule(ExitRule(), -1)
 
-    chess.load_board_str("wa8Sh8Sb8Rg8Rc8Cf8Cd8]e8Ka7Fb7Fc7Fd7Fe7Ff7Fg7Fh7F;ba1Sh1Sb1Rg1Rc1Cf1Cd1]e1Ka2Fb2Fc2Fd2Fe2Ff2Fg2Fh2F")
+    ruleset.add_rule(CreatePieceRule())
+    ruleset.add_rule(CounterRule())
+
+    chess.load_board_str("wa8Sh8Sb8Jg8Jc8Cf8Cd8We8Ka7Fb7Fc7Fd7Fe7Ff7Fg7Fh7F;"
+                         "ba1Sh1Sb1Jg1Jc1Cf1Cd1We1Ka2Fb2Fc2Fd2Fe2Ff2Fg2Fh2F")
+
+    if online:
+        make_online(chess, [move1, "exit", "take", "create_piece"])
+    elif playback:
+        ruleset.add_rule(PlaybackRule(chess, playback, move0), 0)
+
+    if not playback and record:
+        ruleset.add_rule(RecordRule())
+
     ruleset.process("init", ())
     chess.geometry("600x600")
     chess.mainloop()
 
 
 if __name__ == '__main__':
+    play_fairy_variant(online=True, record=False)
     # play_chess(record=False, online=False)
-    play_chess(online=True, record=False)
+    # play_chess(online=True, record=False)
     # play_chess(online=False, playback="2020_12_30_13_05_48.chs")
