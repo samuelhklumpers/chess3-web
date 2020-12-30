@@ -1,3 +1,6 @@
+from tkinter import simpledialog
+from typing import List
+
 from rules import *
 from chess_structures import *
 from util import *
@@ -219,5 +222,35 @@ class PawnPostDouble(Rule):
                     piece.double = game.get_turn_num()
 
 
+class PromoteRule(Rule):
+    def __init__(self, eligible: List[str], promotions: List[str]):
+        self.eligible = eligible
+        self.promotions = promotions
+
+    def process(self, game: Chess, effect: str, args):
+        if effect == "moved":
+            board = game.board
+            piece_id, start, end = args
+            piece = game.get_from_id(piece_id)
+            shape = piece.shape
+            col = piece.get_colour()
+
+            if col not in game.player:
+                return
+
+            y = 0 if col == "w" else board.ny - 1
+
+            if end[1] == y:
+                if shape in self.eligible:
+                    promotion = simpledialog.askstring("Promotion", "One of: " + str(self.promotions))
+
+                    elist = []
+                    elist += [("take", end)]
+                    # avoid this ^ and skip to cleanup when using exploding pieces or so
+                    if promotion:
+                        elist += [("create_piece", (end, col, promotion))]
+                    return elist
+
+
 __all__ = ['PawnSingleRule', 'PawnDoubleRule', 'PawnTakeRule', 'PawnEnPassantRule', 'KnightRule', 'BishopRule',
-           'RookRule', 'QueenRule', 'KingRule', 'CastleRule', 'PawnPostDouble']
+           'RookRule', 'QueenRule', 'KingRule', 'CastleRule', 'PawnPostDouble', 'PromoteRule']

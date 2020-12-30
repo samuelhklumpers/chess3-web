@@ -35,7 +35,7 @@ def make_online(chess: Chess, whitelist: List[Rule]):
     chess.ruleset.add_all(rules)
 
 
-def play_chess(online=True, playback=""):
+def play_chess(online=True, playback="", record=True):
     chess = Chess()  # make a blank board game instance
 
     ruleset = chess.ruleset
@@ -48,14 +48,13 @@ def play_chess(online=True, playback=""):
     actions = make_actions(move0, move1)  # setup normal user interactions
     actions += [DrawSetPieceRule()]
 
-    post_move = [MovedRule(), PawnPostDouble()]  # special rules for pawn, rook and king
+    post_move = [MovedRule(), PawnPostDouble(),
+                 PromoteRule(["p"], ["L", "P", "T", "D"])]  # special rules for pawn, rook and king
 
     ruleset.add_all(move_rules)  # load the rules
     ruleset.add_all(COMMON_RULES)
     ruleset.add_all(actions)
     ruleset.add_all(post_move)
-    if online:
-        make_online(chess, [move1, "exit"])
 
     ruleset.add_rule(ExitRule(), -1)  # exit immediately on "exit", but after everything else processes the "exit"
 
@@ -65,9 +64,12 @@ def play_chess(online=True, playback=""):
     chess.load_board_str("wa8Th8Tb8Pg8Pc8Lf8Ld8De8Ka7pb7pc7pd7pe7pf7pg7ph7p;"
                          "ba1Th1Tb1Pg1Pc1Lf1Ld1De1Ka2pb2pc2pd2pe2pf2pg2ph2p")  # load pieces onto board
 
-    if playback:
+    if online:
+        make_online(chess, [move1, "exit", "take", "create_piece"])
+    elif playback:
         ruleset.add_rule(PlaybackRule(chess, playback, move0), 0)
-    else:
+
+    if not playback and record:
         ruleset.add_rule(RecordRule())
 
     ruleset.process("init", ())  # run initialization
@@ -101,5 +103,6 @@ def play_fairy_variant():
 
 
 if __name__ == '__main__':
-    # play_chess(online=True)
-    play_chess(online=False, playback="2020_12_30_13_05_48.chs")
+    # play_chess(record=False, online=False)
+    play_chess(online=True, record=False)
+    # play_chess(online=False, playback="2020_12_30_13_05_48.chs")
