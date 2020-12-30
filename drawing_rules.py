@@ -182,7 +182,6 @@ class DrawPieceRule(Rule):  # parametrize
 
     def process(self, game: Chess, effect, args):
         if effect == "draw_piece":
-            print(args)
             piece = game.board.get_tile(args).piece
 
             if piece:

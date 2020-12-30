@@ -35,7 +35,7 @@ def make_online(chess: Chess, whitelist: List[Rule]):
     chess.ruleset.add_all(rules)
 
 
-def play_chess(online=True):
+def play_chess(online=True, playback=""):
     chess = Chess()  # make a blank board game instance
 
     ruleset = chess.ruleset
@@ -64,6 +64,12 @@ def play_chess(online=True):
 
     chess.load_board_str("wa8Th8Tb8Pg8Pc8Lf8Ld8De8Ka7pb7pc7pd7pe7pf7pg7ph7p;"
                          "ba1Th1Tb1Pg1Pc1Lf1Ld1De1Ka2pb2pc2pd2pe2pf2pg2ph2p")  # load pieces onto board
+
+    if playback:
+        ruleset.add_rule(PlaybackRule(chess, playback, move0), 0)
+    else:
+        ruleset.add_rule(RecordRule())
+
     ruleset.process("init", ())  # run initialization
     chess.geometry("600x600")
     chess.mainloop()  # start the game
@@ -95,4 +101,5 @@ def play_fairy_variant():
 
 
 if __name__ == '__main__':
-    play_chess(online=True)
+    # play_chess(online=True)
+    play_chess(online=False, playback="2020_12_30_13_05_48.chs")

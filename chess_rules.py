@@ -1,3 +1,4 @@
+import datetime
 import json
 import random
 import traceback
@@ -103,6 +104,7 @@ class MoveTakeRule(Rule):
 
             elist = [("set_piece", (args[1], moving_id))]
             elist += [("set_piece", (args[0], null_id))]
+            elist += [("move_success", ())]  # redundant, but useful later for signalling tolerable inputs
             elist += [("moved", (moving_id, args[0], args[1]))]
             elist += [("takes", (moving_id, taken_id, args[0], args[1]))]
 
@@ -231,6 +233,47 @@ class SetPlayerRule(Rule):
             print("you are playing as:", args)
 
 
+class RecordRule(Rule):
+    def __init__(self):
+        self.start = datetime.datetime.now()
+        self.log = []
+
+    def process(self, game: Chess, effect: str, args):
+        if effect == "moved":
+            piece_id, start, end = args
+
+            self.log += [(start, end)]
+        elif effect == "exit":
+            fn = self.start.strftime("%Y_%m_%d_%H_%M_%S.chs")
+
+            with open(fn, mode="w") as f:
+                json.dump(self.log, f)
+
+
+class PlaybackRule(Rule):
+    def __init__(self, game: Game, fn: str, move0: str):
+        game.bind("<Return>", self.step)
+
+        self.move0 = move0
+        self.ruleset = game.ruleset
+        self.i = 0
+
+        with open(fn, mode="r") as f:
+            self.log = json.load(f)
+
+    def step(self, event=None):
+        if self.i == len(self.log):
+            return
+
+        move = self.log[self.i]
+        self.i += 1
+
+        self.ruleset.process(self.move0, move)
+
+    def process(self, game: Game, effect: str, args):
+        ...
+
+
 class ReceiveRule(Rule):
     def run(self, game: Chess):
         try:
@@ -307,4 +350,5 @@ class ExitRule(Rule):
 
 __all__ = ['TouchMoveRule', 'IdMoveRule', 'MoveTurnRule', 'MovePlayerRule', 'FriendlyFireRule', 'MoveTakeRule',
            'TakeRule', 'CreatePieceRule', 'SetPieceRule', 'MoveRedrawRule', 'NextTurnRule', 'AnyRule', 'MovedRule',
-           'CounterRule', 'WinRule', 'WinCloseRule', 'SetPlayerRule', 'ReceiveRule', 'SendRule', 'CloseSocket', 'ExitRule']
+           'CounterRule', 'WinRule', 'WinCloseRule', 'SetPlayerRule', 'ReceiveRule', 'SendRule', 'CloseSocket',
+           'RecordRule', 'PlaybackRule', 'ExitRule']
