@@ -7,6 +7,7 @@ from PIL import ImageTk
 
 from chess_structures import *
 from rules import *
+from structures import Ruleset
 
 
 def fill_opaque(arr, col):
@@ -53,15 +54,69 @@ class SelectRule(Rule):
             ret = []
 
             if self.selected:
-                ret += [("mark_cmap", (args, "normal"))]
+                ret += [("mark_cmap", (args, "normal")), ("unselected", self.selected)]
 
             if args != self.selected:
                 self.selected = args
-                ret += [("mark_cmap", (args, "#FF0000"))]
+                ret += [("mark_cmap", (args, "#FF0000")), ("selected" , args)]
             else:
                 self.selected = None
 
             return ret
+
+
+class IndicatorRule(Rule):
+    def __init__(self, watch):
+        self.triggered = False
+        self.watch = watch
+
+    def set(self):
+        self.triggered = True
+
+    def unset(self):
+        self.triggered = False
+
+    def is_set(self):
+        return self.triggered
+
+    def process(self, game: Chess, effect: str, args):
+        if effect in self.watch:
+            self.set()
+
+
+class MarkValidRule(Rule):
+    def __init__(self, subruleset: Ruleset, move0):
+        self.subruleset = subruleset
+        self.move0 = move0
+
+        self.tags = []
+
+        self.success_indicator = IndicatorRule(["move_success"])
+
+        self.subruleset.add_rule(self.success_indicator)
+
+    def search(self, game: Chess, around):  # around must be tile_id
+        for tile_id in game.board.tile_ids():
+            self.subruleset.process(self.move0, (around, tile_id))
+
+            if self.success_indicator.is_set():
+                yield tile_id
+
+            self.success_indicator.unset()
+
+    def process(self, game: Chess, effect: str, args):
+        if effect == "selected":
+            valid = list(self.search(game, around=args))
+
+            dx, dy = game.board.tile_dims()
+            for i, j in valid:
+                x, y = i * dx, j * dy
+
+                self.tags += [game.board.create_text(x+dx/2, y+dy/2, text="x", fill="red")]
+        elif effect == "unselected":
+            for tag in self.tags:
+                game.board.delete(tag)
+            self.tags = []
 
 
 class DrawSetPieceRule(Rule):
@@ -242,4 +297,4 @@ class MarkRule(Rule):
 
 
 __all__ = ['DrawInitRule', 'RedrawRule', 'SelectRule', 'fill_opaque', 'DrawPieceRule', 'MarkCMAPRule', 'hex_to_rgb',
-           'MarkRule', 'DrawSetPieceRule', 'DrawPieceCMAPRule']
+           'MarkRule', 'DrawSetPieceRule', 'DrawPieceCMAPRule', 'IndicatorRule', 'MarkValidRule']

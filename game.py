@@ -7,7 +7,7 @@ from fairy_rules import *
 from chess_structures import *
 from drawing_rules import *
 from online import *
-
+from structures import Ruleset
 
 DRAWING_RULES = [DrawInitRule(), RedrawRule(), MarkRule(), SelectRule(), MarkCMAPRule(), DrawPieceRule(), DrawSetPieceRule(), DrawPieceCMAPRule()]
 WIN_RULES = [WinRule(), WinCloseRule()]
@@ -18,8 +18,8 @@ MOVE_RULES: List[List[Type[Rule]]] = [[IdMoveRule], [MoveTurnRule], [MovePlayerR
 NETWORK_RULES = [ReceiveRule(), CloseSocket()]
 
 
-def make_actions(move_start: str, move_finish: str):
-    return [TouchMoveRule(move_start), TakeRule(), MoveTakeRule(move_finish),
+def make_actions(move_start: str):
+    return [TouchMoveRule(move_start), TakeRule(), MoveTakeRule(),
             SetPieceRule(), SetPlayerRule(), NextTurnRule()]
 
 
@@ -45,7 +45,8 @@ def play_chess(online=True, playback="", record=True):
 
     move0, move_rules, move1 = chain_rules(move_rules, "move")  # arrange the movement requirements
                                                                 # in a chain of consequences
-    actions = make_actions(move0, move1)  # setup normal user interactions
+    move_rules += [SuccesfulMoveRule(move1)]
+    actions = make_actions(move0)  # setup normal user interactions
     actions += [DrawSetPieceRule()]
 
     post_move = [MovedRule(), PawnPostDouble(),
@@ -85,7 +86,9 @@ def play_fairy_variant(online=True, playback="", record=True):
     move_rules = MOVE_RULES + [[FerzRule, JumperRule, KirinRule, ShooterRule, WheelRule, KingRule]]
     move0, move_rules, move1 = chain_rules(move_rules, "move")
 
-    actions = make_actions(move0, move1)
+    move_rules += [SuccesfulMoveRule(move1)]
+
+    actions = make_actions(move0)
     actions += [DrawSetPieceRule()]
 
     post_move = [MovedRule(), PawnPostDouble(),
@@ -99,6 +102,14 @@ def play_fairy_variant(online=True, playback="", record=True):
 
     ruleset.add_rule(CreatePieceRule())
     ruleset.add_rule(CounterRule())
+
+    turnless = [[IdMoveRule], [FriendlyFireRule], [FerzRule, JumperRule, KirinRule, ShooterRule, WheelRule, KingRule]]
+    turnless0, turnless_rules, turnless1 = chain_rules(turnless, "move")
+
+    subruleset = Ruleset(chess)
+    subruleset.add_all(turnless_rules)
+    subruleset.add_rule(SuccesfulMoveRule(turnless1))
+    ruleset.add_rule(MarkValidRule(subruleset, turnless0))
 
     chess.load_board_str("wa8Sh8Sb8Jg8Jc8Cf8Cd8We8Ka7Fb7Fc7Fd7Fe7Ff7Fg7Fh7F;"
                          "ba1Sh1Sb1Jg1Jc1Cf1Cd1We1Ka2Fb2Fc2Fd2Fe2Ff2Fg2Fh2F")
@@ -117,7 +128,7 @@ def play_fairy_variant(online=True, playback="", record=True):
 
 
 if __name__ == '__main__':
-    play_fairy_variant(online=True, record=False)
+    play_fairy_variant(online=False, record=False)
     # play_chess(record=False, online=False)
     # play_chess(online=True, record=False)
     # play_chess(online=False, playback="2020_12_30_13_05_48.chs")

@@ -90,12 +90,18 @@ class FriendlyFireRule(Rule):
                 return [(self.consequence, args)]
 
 
-class MoveTakeRule(Rule):
+class SuccesfulMoveRule(Rule):
     def __init__(self, cause: str):
         self.cause = cause
 
     def process(self, game: Chess, effect: str, args):
         if effect == self.cause:
+            return [("move_success", args)]
+
+
+class MoveTakeRule(Rule):
+    def process(self, game: Chess, effect: str, args):
+        if effect == "move_success":
             moving_piece = game.board.get_tile(args[0]).get_piece()
             taken_piece = game.board.get_tile(args[1]).get_piece()
 
@@ -109,7 +115,6 @@ class MoveTakeRule(Rule):
                 elist += [("set_piece", (args[1], moving_id))]
                 elist += [("set_piece", (args[0], null_id))]
                 elist += [("takes", (moving_id, taken_id, args[0], args[1]))]
-            elist += [("move_success", ())]  # redundant, but useful later for signalling tolerable inputs
             elist += [("moved", (moving_id, args[0], args[1]))]
 
             return elist
@@ -353,7 +358,7 @@ class ExitRule(Rule):
             game.after(2000, game.destroy)
 
 
-__all__ = ['TouchMoveRule', 'IdMoveRule', 'MoveTurnRule', 'MovePlayerRule', 'FriendlyFireRule', 'MoveTakeRule',
-           'TakeRule', 'CreatePieceRule', 'SetPieceRule', 'MoveRedrawRule', 'NextTurnRule', 'AnyRule', 'MovedRule',
-           'CounterRule', 'WinRule', 'WinCloseRule', 'SetPlayerRule', 'ReceiveRule', 'SendRule', 'CloseSocket',
+__all__ = ['TouchMoveRule', 'IdMoveRule', 'MoveTurnRule', 'MovePlayerRule', 'FriendlyFireRule', 'SuccesfulMoveRule',
+           'MoveTakeRule', 'TakeRule', 'CreatePieceRule', 'SetPieceRule', 'MoveRedrawRule', 'NextTurnRule', 'AnyRule',
+           'MovedRule', 'CounterRule', 'WinRule', 'WinCloseRule', 'SetPlayerRule', 'ReceiveRule', 'SendRule', 'CloseSocket',
            'RecordRule', 'PlaybackRule', 'ExitRule']

@@ -65,6 +65,10 @@ class Board(tk.Canvas):
                 tag = self.create_text(x + dx/2, y + dy/2, text=piece.shape)
                 self.piece_tags[piece_id] = tag
 
+    def tile_dims(self):
+        w, h = self.winfo_width(), self.winfo_height()
+        return w / self.nx, h / self.ny
+
     def click_to_tile(self, x, y):
         w, h = self.winfo_width(), self.winfo_height()
         dx, dy = w / self.nx, h / self.ny
@@ -72,10 +76,15 @@ class Board(tk.Canvas):
         return int(x / dx), int(y / dy)
 
     def left_release(self, event=None):
-        self.create_oval(event.x, event.y, event.x + 2, event.y + 2, fill="red")
-
         tile_i = self.click_to_tile(event.x, event.y)
         self.game.process("touch", tile_i)
+
+    def tile_ids(self):
+        for (i, j), v in np.ndenumerate(self.tiles):
+            yield (i, j)
+
+    def get_piece(self, tile_i):
+        return self.get_tile(tile_i).get_piece()
 
     def get_tile(self, tile_i):
         return self.tiles[tuple(tile_i)]
