@@ -169,6 +169,8 @@ class NextTurnRule(Rule):
             game.turn = "b" if game.turn == "w" else "w"
             game.turn_num += 1
 
+            return [("turn_changed", ())]
+
 
 class AnyRule(Rule):  # warning: ordering side effect
     def __init__(self, rules: List[Rule]):

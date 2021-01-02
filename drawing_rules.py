@@ -40,7 +40,7 @@ class RedrawRule(Rule):
 
             draw_list = []
             for ix, v in np.ndenumerate(board.tiles):
-                draw_list += [("draw_piece", ix)]#, ("mark_cmap", (ix, "normal"))]
+                draw_list += [("draw_piece", ix)]
 
             return draw_list
 
@@ -84,6 +84,17 @@ class IndicatorRule(Rule):
             self.set()
 
 
+def search(self, game: Chess, around):  # around must be tile_id
+    self.success_indicator.unset()
+    for tile_id in game.board.tile_ids():
+        self.subruleset.process(self.move0, (around, tile_id))
+
+        if self.success_indicator.is_set():
+            yield tile_id
+
+        self.success_indicator.unset()
+
+
 class MarkValidRule(Rule):
     def __init__(self, subruleset: Ruleset, move0):
         self.subruleset = subruleset
@@ -95,18 +106,9 @@ class MarkValidRule(Rule):
 
         self.subruleset.add_rule(self.success_indicator)
 
-    def search(self, game: Chess, around):  # around must be tile_id
-        for tile_id in game.board.tile_ids():
-            self.subruleset.process(self.move0, (around, tile_id))
-
-            if self.success_indicator.is_set():
-                yield tile_id
-
-            self.success_indicator.unset()
-
     def process(self, game: Chess, effect: str, args):
         if effect == "selected":
-            valid = list(self.search(game, around=args))
+            valid = list(search(self, game, around=args))
 
             dx, dy = game.board.tile_dims()
             for i, j in valid:
@@ -297,4 +299,4 @@ class MarkRule(Rule):
 
 
 __all__ = ['DrawInitRule', 'RedrawRule', 'SelectRule', 'fill_opaque', 'DrawPieceRule', 'MarkCMAPRule', 'hex_to_rgb',
-           'MarkRule', 'DrawSetPieceRule', 'DrawPieceCMAPRule', 'IndicatorRule', 'MarkValidRule']
+           'MarkRule', 'DrawSetPieceRule', 'DrawPieceCMAPRule', 'IndicatorRule', 'MarkValidRule', 'search']
