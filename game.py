@@ -22,7 +22,7 @@ def make_actions(move_start: str):
 
 
 def make_online(chess: Chess, whitelist: List[Rule]):
-    dialog = OnlineDialog(chess)
+    dialog = OnlineDialog(chess.tkchess)
     addr, lport, rport, active = dialog.result
     sock = make_socket(addr, lport, rport, active)
 
@@ -33,6 +33,8 @@ def make_online(chess: Chess, whitelist: List[Rule]):
 
 def setup_chess(config: dict, start_positions: str, piece_moves: List[List[Type[Rule]]], post_move: List[Rule], additional: List[Rule]):
     chess = Chess()  # make a blank board game instance
+    tkchess = TkChess(chess)
+
     ruleset = chess.ruleset
 
     moves = MOVE_RULES + piece_moves
@@ -82,8 +84,9 @@ def setup_chess(config: dict, start_positions: str, piece_moves: List[List[Type[
         make_online(chess, [move1, "exit", "take", "create_piece"])
 
     ruleset.process("init", ())
-    chess.geometry("600x600")
-    return chess
+
+    tkchess.geometry("600x600")
+    return chess, tkchess
 
 
 def play_chess(online=True, playback="", record=True):
@@ -101,8 +104,8 @@ def play_chess(online=True, playback="", record=True):
 
     cfg = {"online": online, "playback": playback, "record": record, "show_valid": []}
 
-    chess = setup_chess(cfg, start, move_rules, post_move, additional)
-    chess.mainloop()  # start the game
+    chess, tkchess = setup_chess(cfg, start, move_rules, post_move, additional)
+    tkchess.mainloop()  # start the game
 
 
 def play_fairy(online=True, playback="", record=True):
@@ -119,8 +122,8 @@ def play_fairy(online=True, playback="", record=True):
 
     cfg = {"online": online, "playback": playback, "record": record, "show_valid": []}
 
-    chess = setup_chess(cfg, start, move_rules, post_move, additional)
-    chess.mainloop()  # start the game
+    chess, tkchess = setup_chess(cfg, start, move_rules, post_move, additional)
+    tkchess.mainloop()  # start the game
 
 
 def play_los(online=True, playback="", record=True):
@@ -140,9 +143,9 @@ def play_los(online=True, playback="", record=True):
 
     cfg = {"online": online, "playback": playback, "record": record, "show_valid": show_valid}
 
-    chess = setup_chess(cfg, start, move_rules, post_move, additional)
-    chess.mainloop()  # start the game
+    chess, tkchess = setup_chess(cfg, start, move_rules, post_move, additional)
+    tkchess.mainloop()  # start the game
 
 
 if __name__ == '__main__':
-    play_los(online=True, record=False)
+    play_chess(online=False, record=False)

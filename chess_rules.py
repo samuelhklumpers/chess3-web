@@ -262,8 +262,8 @@ class RecordRule(Rule):
 
 
 class PlaybackRule(Rule):
-    def __init__(self, game: Game, fn: str, move0: str):
-        game.bind("<Return>", self.step)
+    def __init__(self, game: Chess, fn: str, move0: str):
+        game.tkchess.bind("<Return>", self.step)
 
         self.move0 = move0
         self.ruleset = game.ruleset
@@ -330,18 +330,18 @@ class SendRule(Rule):
     def __init__(self, whitelist: List[Rule]):
         self.whitelist = whitelist
 
-    def process(self, game: Game, effect: str, args):
+    def process(self, game: Chess, effect: str, args):
         if not game.receiving:
             if effect in self.whitelist:
                 game.socket.send(json.dumps((effect, args)).encode() + b";")
 
 
 class CloseSocket(Rule):
-    def process(self, game: Game, effect: str, args):
+    def process(self, game: Chess, effect: str, args):
         if effect == "exit":
-            game.after(1000, lambda: self.close(game))
+            game.tkchess.after(1000, lambda: self.close(game))
 
-    def close(self, game: Game):
+    def close(self, game: Chess):
             try:
                 game.socket.shutdown(0)
                 game.socket.close()
@@ -353,10 +353,10 @@ class CloseSocket(Rule):
 
 
 class ExitRule(Rule):
-    def process(self, game: Game, effect: str, args):
+    def process(self, game: Chess, effect: str, args):
         if effect == "exit":
             print("exiting")
-            game.after(2000, game.destroy)
+            game.tkchess.after(2000, game.tkchess.destroy)
 
 
 __all__ = ['TouchMoveRule', 'IdMoveRule', 'MoveTurnRule', 'MovePlayerRule', 'FriendlyFireRule', 'SuccesfulMoveRule',

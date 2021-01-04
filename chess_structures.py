@@ -1,7 +1,8 @@
+import numpy as np
 import tkinter as tk
 
-from structures import Tile, Board, Game
-from util import grouper
+from structures import *
+from util import *
 
 
 class PieceCounter(tk.Frame):
@@ -91,23 +92,18 @@ class Chess(Game):
 
         self.object_map = {0: None}
         self.obj_count = 1
-        self.board = Board(game=self, master=self, tiles=NormalTile)
-        self.counter = PieceCounter(self)
         self.turn = "w"
         self.player = "bw"
         self.turn_num = 1
+
+        self.board = None
+        self.counter = None
 
         self.socket = None
         self.socket_thread = None
         self.receiving = True
 
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(0, weight=1)
-
-        self.board.grid(column=0, row=0, sticky="nsew")
-        self.counter.grid(column=1, row=0, sticky="nsew")
-
-        self.protocol("WM_DELETE_WINDOW", lambda: self.ruleset.process("exit", ()))
+        self.tkchess = None
 
     def set_ruleset(self, ruleset):
         self.ruleset = ruleset
@@ -156,4 +152,98 @@ class Chess(Game):
         self.ruleset.process_all(create)
 
 
-__all__ = ["PieceCounter", "NormalTile", "Piece", "MovedPiece", "Pawn", "Chess"]
+class TkChess(tk.Tk):
+    def __init__(self, chess):
+        tk.Tk.__init__(self, "chess")
+
+        self.chess = chess
+        self.chess.tkchess = self
+
+        chess.board = Board(game=chess, master=self, tiles=NormalTile)
+        chess.counter = PieceCounter(master=self)
+
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+
+        chess.board.grid(column=0, row=0, sticky="nsew")
+        chess.counter.grid(column=1, row=0, sticky="nsew")
+
+        self.protocol("WM_DELETE_WINDOW", lambda: chess.ruleset.process("exit", ()))
+
+
+class Board(tk.Canvas):
+    def __init__(self, game: Chess, master=None, tiles=Tile):
+        tk.Canvas.__init__(self, master=master)
+
+        self.game = game
+
+        self.width, self.height = self.winfo_width(), self.winfo_height()
+        self.nx, self.ny = 8, 8
+
+        self.tiles = np.empty((self.nx, self.ny), dtype=object)
+
+        self.tile_tags = np.full((self.nx, self.ny), -1, dtype=int)
+        self.piece_tags = {}
+
+        for ix, v in np.ndenumerate(self.tiles):
+            self.tiles[ix] = tiles()
+
+        self.bind("<Configure>", self.resize)
+        self.bind("<ButtonRelease-1>", self.left_release)
+
+    def resize(self, event):
+        sx, sy = float(event.width) / self.width, float(event.height) / self.height
+        self.width, self.height = event.width, event.height
+        self.scale("all", 0, 0, sx, sy)
+
+    def draw_tiles(self):
+        w, h = self.winfo_width(), self.winfo_height()
+        dx, dy = w / self.nx, h / self.ny
+
+        for (i, j), v in np.ndenumerate(self.tiles):
+            x, y = i * dx, j * dy
+            parity = (i + j) % 2
+
+            col = '#E2DA9C' if parity else '#AF8521'
+            self.tile_tags[i, j] = self.create_rectangle(x, y, x + dx, y + dy, fill=col)
+
+    def draw_pieces(self):
+        w, h = self.winfo_width(), self.winfo_height()
+        dx, dy = w / self.nx, h / self.ny
+
+        for (i, j), v in np.ndenumerate(self.tiles):
+            x, y = i * dx, j * dy
+
+            tile = self.tiles[(i, j)]
+            piece = tile.piece
+            if piece:
+                piece_id = self.game.get_id(piece)
+                tag = self.create_text(x + dx/2, y + dy/2, text=piece.shape)
+                self.piece_tags[piece_id] = tag
+
+    def tile_dims(self):
+        w, h = self.winfo_width(), self.winfo_height()
+        return w / self.nx, h / self.ny
+
+    def click_to_tile(self, x, y):
+        w, h = self.winfo_width(), self.winfo_height()
+        dx, dy = w / self.nx, h / self.ny
+
+        return int(x / dx), int(y / dy)
+
+    def left_release(self, event=None):
+        tile_i = self.click_to_tile(event.x, event.y)
+        self.game.process("touch", tile_i)
+
+    def tile_ids(self):
+        for (i, j), v in np.ndenumerate(self.tiles):
+            yield (i, j)
+
+    def get_piece(self, tile_i):
+        return self.get_tile(tile_i).get_piece()
+
+    def get_tile(self, tile_i):
+        return self.tiles[tuple(tile_i)]
+
+
+__all__ = ["PieceCounter", "NormalTile", "Piece", "MovedPiece", "Pawn", "Chess", "TkChess", "Board"]
