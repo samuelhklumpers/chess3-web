@@ -124,7 +124,6 @@ class TakeRule(Rule):
     def process(self, game: Chess, effect: str, args):
         if effect == "take":
             taken_piece = game.board.get_tile(args).get_piece()
-            print(taken_piece)
             null_id = game.get_id(None)
             taken_id = game.get_id(taken_piece)
             return [("set_piece", (args, null_id)), ("takes", (null_id, taken_id, args, args))]
