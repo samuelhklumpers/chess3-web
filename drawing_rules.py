@@ -7,7 +7,8 @@ from PIL import ImageTk
 
 from chess_structures import *
 from rules import *
-from structures import Ruleset
+from structures import *
+from colours import *
 
 
 def fill_opaque(arr, col):
@@ -58,7 +59,7 @@ class SelectRule(Rule):
 
             if args != self.selected:
                 self.selected = args
-                ret += [("mark_cmap", (args, "#FF0000")), ("selected" , args)]
+                ret += [("mark_cmap", (args, HEXCOL["select"])), ("selected" , args)]
             else:
                 self.selected = None
 
@@ -114,7 +115,7 @@ class MarkValidRule(Rule):
             for i, j in valid:
                 x, y = i * dx, j * dy
 
-                self.tags += [game.board.create_text(x+dx/2, y+dy/2, text="x", fill="red")]
+                self.tags += [game.board.create_text(x+dx/2, y+dy/2, font=("Consolas", 16), text="x", fill=HEXCOL["valid"])]
         elif effect == "unselected":
             for tag in self.tags:
                 game.board.delete(tag)
@@ -135,7 +136,7 @@ class DrawSetPieceRule(Rule):
 
 
 class DrawPieceCMAPRule(Rule):
-    cmap = {"w": "#FFFFFF", "b": "#000000"}
+    cmap = HEXCOL.copy()
 
     def process(self, game: Chess, effect, args):
         if effect == "draw_piece_at_cmap":
@@ -263,7 +264,7 @@ class DrawPieceRule(Rule):  # parametrize
 
 
 class MarkCMAPRule(Rule):
-    cmap = {"w": "#FFFFFF", "b": "#000000"}
+    cmap = HEXCOL.copy()
 
     def process(self, game: Chess, effect, args):
         if effect == "mark_cmap":

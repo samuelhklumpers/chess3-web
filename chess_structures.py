@@ -3,24 +3,25 @@ import tkinter as tk
 
 from structures import *
 from util import *
+from colours import *
 
 
 class PieceCounter(tk.Frame):
     def __init__(self, master=None):
         tk.Frame.__init__(self, master=master)
 
-        self.cmap = {"w": "white", "b": "black"}
+        self.cmap = HEXCOL.copy()
         self.players = {}
         self.frames = {}
         self.counts = {}
 
     def increment(self, colour, shape, dn):
-        WEIRD_GREEN = "#00FF99"
+        bg = HEXCOL["counter_bg"]
 
         if colour not in self.players:
             self.players[colour] = {}
             self.counts[colour] = {}
-            self.frames[colour] = frame = tk.Frame(self, bg=WEIRD_GREEN)
+            self.frames[colour] = frame = tk.Frame(self, bg=bg)
             frame.pack(fill=tk.BOTH, expand=1)
         player = self.players[colour]
         counts = self.counts[colour]
@@ -31,11 +32,11 @@ class PieceCounter(tk.Frame):
 
             col = self.cmap[colour]
 
-            icon = tk.Label(frame, text=shape, bg=WEIRD_GREEN, fg=col)
+            icon = tk.Label(frame, text=shape, bg=bg, fg=col)
             count = tk.StringVar()
             count.set("0")
 
-            count_label = tk.Label(frame, textvariable=count, bg=WEIRD_GREEN)
+            count_label = tk.Label(frame, textvariable=count, bg=bg)
             row = len(player)
 
             icon.grid(row=row, column=0)

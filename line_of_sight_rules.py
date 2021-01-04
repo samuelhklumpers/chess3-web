@@ -2,6 +2,7 @@ from chess_structures import *
 from drawing_rules import *
 from rules import *
 from structures import *
+from colours import *
 
 
 class LineOfSightRule(Rule):
@@ -18,7 +19,7 @@ class LineOfSightRule(Rule):
 
             for tile_id in game.board.tile_ids():
                 tag = game.board.tile_tags[tile_id]
-                game.board.itemconfig(tag, fill="#444444")
+                game.board.itemconfig(tag, fill=HEXCOL["fog"])
                 elist += [("draw_piece_at", (tile_id, "", ""))]
 
             return elist
@@ -42,7 +43,7 @@ class LineOfSightRule(Rule):
 
                 i, j = tile_id
                 parity = (i + j) % 2
-                col = '#E2DA9C' if parity else '#AF8521'
+                col = HEXCOL["tile_white"] if parity else HEXCOL["tile_brown"]
 
                 game.board.itemconfig(tag, fill=col)
                 elist += [("draw_piece", tile_id)]

@@ -9,7 +9,7 @@ class Game:
 
 
 class TkGame(tk.Tk):
-    def __init__(self, game):
+    def __init__(self, game: Game):
         tk.Tk.__init__(self, "game")
 
         self.game = game
@@ -27,9 +27,7 @@ class Ruleset:
 
         self.debug = False
 
-    def add_rule(self, rule, prio=1):
-        # 0 forbidden/debug
-        # -1 forbidden/debug
+    def add_rule(self, rule, prio=1): # 0 first forbidden/debug, -1 last forbidden/debug
         self.rules.setdefault(prio, []).append(rule)
 
     def add_all(self, rules, prio=1):
