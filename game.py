@@ -18,7 +18,7 @@ NETWORK_RULES: List[Rule] = [ReceiveRule(), CloseSocket()]
 
 def make_actions(move_start: str):
     return [TouchMoveRule(move_start), TakeRule(), MoveTakeRule(),
-            SetPieceRule(), SetPlayerRule(), NextTurnRule(), CreatePieceRule()]
+            SetPieceRule(), SetPlayerRule(), NextTurnRule()]
 
 
 def make_online(chess: Chess, whitelist: List[Rule]):
@@ -31,7 +31,7 @@ def make_online(chess: Chess, whitelist: List[Rule]):
     chess.ruleset.add_all(rules)
 
 
-def setup_chess(config: dict, start_positions: str, piece_moves: List[List[Type[Rule]]], post_move: List[Rule], additional: List[Rule]):
+def setup_chess(config: dict, start_positions: str, special: List[Rule], piece_moves: List[List[Type[Rule]]], post_move: List[Rule], additional: List[Rule]):
     chess = Chess()  # make a blank board game instance
 
     board = Board(chess)
@@ -49,6 +49,7 @@ def setup_chess(config: dict, start_positions: str, piece_moves: List[List[Type[
     move_rules += [SuccesfulMoveRule(move1)]  # add succesful move side effect
 
     actions = make_actions(move0)  # setup standard interactions (e.g. click, move, next turn)
+    actions += special
 
     ruleset.add_all(move_rules)  # load rules
     ruleset.add_all(DRAWING_RULES)
@@ -96,6 +97,8 @@ def setup_chess(config: dict, start_positions: str, piece_moves: List[List[Type[
 
 
 def play_chess(online=True, playback="", record=True):
+    special = [CreatePieceRule({"K": MovedPiece, "p": Pawn, "T": MovedPiece})]
+
     move_rules= [[PawnSingleRule, PawnDoubleRule, PawnTakeRule, PawnEnPassantRule, KnightRule,
                   BishopRule, RookRule, QueenRule, KingRule, CastleRule]]  # add all normal chess moves
 
@@ -110,11 +113,13 @@ def play_chess(online=True, playback="", record=True):
 
     cfg = {"online": online, "playback": playback, "record": record, "show_valid": []}
 
-    chess, tkchess = setup_chess(cfg, start, move_rules, post_move, additional)
+    chess, tkchess = setup_chess(cfg, start, special, move_rules, post_move, additional)
     tkchess.mainloop()  # start the game
 
 
 def play_fairy(online=True, playback="", record=True):
+    special = [CreatePieceRule({})]
+
     move_rules = [[FerzRule, JumperRule, KirinRule, ShooterRule, WheelRule, KingRule]]
 
     post_move = [DrawSetPieceRule(),
@@ -128,11 +133,13 @@ def play_fairy(online=True, playback="", record=True):
 
     cfg = {"online": online, "playback": playback, "record": record, "show_valid": []}
 
-    chess, tkchess = setup_chess(cfg, start, move_rules, post_move, additional)
+    chess, tkchess = setup_chess(cfg, start, special, move_rules, post_move, additional)
     tkchess.mainloop()  # start the game
 
 
 def play_los(online=True, playback="", record=True):
+    special = [CreatePieceRule({})]
+
     move_rules= [[PawnSingleRule, PawnDoubleRule, PawnTakeRule, PawnEnPassantRule, KnightRule,
                   BishopRule, RookRule, QueenRule, KingRule]]  # add all normal chess moves
 
@@ -149,9 +156,9 @@ def play_los(online=True, playback="", record=True):
 
     cfg = {"online": online, "playback": playback, "record": record, "show_valid": show_valid}
 
-    chess, tkchess = setup_chess(cfg, start, move_rules, post_move, additional)
+    chess, tkchess = setup_chess(cfg, start, special, move_rules, post_move, additional)
     tkchess.mainloop()  # start the game
 
 
 if __name__ == '__main__':
-    play_chess(online=False, record=False)
+    play_fairy(online=False, record=False)

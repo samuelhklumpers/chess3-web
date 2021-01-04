@@ -106,7 +106,6 @@ class BishopRule(Rule):
             if piece.shape == "L":
                 x1, y1 = args[0]
                 x2, y2 = args[1]
-
                 dx, dy = x2 - x1, y2 - y1
 
                 if abs(dx) == abs(dy):
@@ -128,7 +127,6 @@ class RookRule(Rule):
             if piece.shape == "T":
                 x1, y1 = args[0]
                 x2, y2 = args[1]
-
                 dx, dy = x2 - x1, y2 - y1
 
                 if dx * dy == 0:
@@ -150,7 +148,6 @@ class QueenRule(Rule):
             if piece.shape == "D":
                 x1, y1 = args[0]
                 x2, y2 = args[1]
-
                 dx, dy = x2 - x1, y2 - y1
 
                 if dx * dy == 0 or abs(dx) == abs(dy):
@@ -190,7 +187,6 @@ class CastleRule(Rule):
 
                 x1, y1 = args[0]
                 x2, y2 = args[1]
-
                 dx, dy = x2 - x1, y2 - y1
 
                 if abs(dx) == 2 and dy <= 0:

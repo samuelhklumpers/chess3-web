@@ -85,7 +85,7 @@ class MovedPiece(Piece):
 
 
 class Pawn(MovedPiece):
-    def __init__(self, col="w"):
+    def __init__(self, shape=None, col="w"):
         MovedPiece.__init__(self, shape="p", col=col)
 
         self.double = False

@@ -4,7 +4,7 @@ import random
 import traceback
 import threading
 
-from typing import List
+from typing import List, Dict, Callable
 
 from rules import *
 from structures import *
@@ -130,16 +130,15 @@ class TakeRule(Rule):
 
 
 class CreatePieceRule(Rule):
+    def __init__(self, constructors: Dict[str, Callable[[str, str], Piece]]):
+        self.constrs = constructors
+
     def process(self, game: Chess, effect: str, args):
         if effect == "create_piece":
             pos, col, shape = args
 
-            if shape in "KT":
-                piece = MovedPiece(shape, col)
-            elif shape in "p":
-                piece = Pawn(col)
-            else:
-                piece = Piece(shape, col)
+            constr = self.constrs.get(shape, Piece)
+            piece = constr(shape, col)
 
             piece_id = game.add_object(piece)
 
