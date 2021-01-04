@@ -8,12 +8,13 @@ from fairy_rules import *
 from chess_structures import *
 from drawing_rules import *
 from online import *
-from structures import Ruleset
+from structures import *
+from network_rules import *
 
 
 DRAWING_RULES: List[Rule] = [DrawInitRule(), RedrawRule(), MarkRule(), SelectRule(), MarkCMAPRule(), DrawPieceRule(), DrawPieceCMAPRule()]
 MOVE_RULES: List[List[Type[Rule]]] = [[IdMoveRule], [MoveTurnRule], [MovePlayerRule], [FriendlyFireRule]]
-NETWORK_RULES: List[Rule] = [ReceiveRule(), CloseSocket()]
+NETWORK_RULES: List[Rule] = [ReceiveRule("net0"), ColourRollRule("net0", "net1"), CloseSocket()]
 
 
 def make_actions(move_start: str):
@@ -161,4 +162,4 @@ def play_los(online=True, playback="", record=True):
 
 
 if __name__ == '__main__':
-    play_fairy(online=False, record=False)
+    play_fairy(online=True, record=False)
