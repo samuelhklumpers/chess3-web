@@ -36,8 +36,10 @@ class RedrawRule(Rule):
     def process(self, game: Chess, effect, args):
         if effect == "redraw":
             board = game.board
-            board.delete("all")
-            board.draw_tiles()
+            tkboard = board.tkboard
+
+            tkboard.delete("all")
+            tkboard.draw_tiles()
 
             draw_list = []
             for ix, v in np.ndenumerate(board.tiles):
@@ -85,7 +87,7 @@ class IndicatorRule(Rule):
             self.set()
 
 
-def search(self, game: Chess, around):  # around must be tile_id
+def search_valid(self, game: Chess, around):  # around must be tile_id
     self.success_indicator.unset()
     for tile_id in game.board.tile_ids():
         self.subruleset.process(self.move0, (around, tile_id))
@@ -109,16 +111,18 @@ class MarkValidRule(Rule):
 
     def process(self, game: Chess, effect: str, args):
         if effect == "selected":
-            valid = list(search(self, game, around=args))
+            valid = list(search_valid(self, game, around=args))
 
-            dx, dy = game.board.tile_dims()
+            board = game.board.tkboard
+            dx, dy = board.tile_dims()
             for i, j in valid:
                 x, y = i * dx, j * dy
 
-                self.tags += [game.board.create_text(x+dx/2, y+dy/2, font=("Consolas", 16), text="x", fill=HEXCOL["valid"])]
+                self.tags += [board.create_text(x+dx/2, y+dy/2, font=("Consolas", 16), text="x", fill=HEXCOL["valid"])]
         elif effect == "unselected":
+            board = game.board.tkboard
             for tag in self.tags:
-                game.board.delete(tag)
+                board.delete(tag)
             self.tags = []
 
 
@@ -127,7 +131,7 @@ class DrawSetPieceRule(Rule):
         if effect == "piece_set":
             pos, piece_id = args
 
-            piece = game.get_from_id(piece_id)
+            piece = game.get_by_id(piece_id)
 
             shape = piece.shape if piece else ""
             col = piece.get_colour() if piece else ""
@@ -195,10 +199,10 @@ class DrawPieceRule(Rule):  # parametrize
     def draw_image(self, game, pos, shape, col):
         self.undraw(game, pos)
 
-        board = game.board
+        board = game.board.tkboard
+
         i, j = pos
-        w, h = board.winfo_width(), board.winfo_height()
-        dx, dy = w / board.nx, h / board.ny
+        dx, dy = board.tile_dims()
         x, y = i * dx, j * dy
 
         _, im = self.load_colour(shape, col)
@@ -213,10 +217,10 @@ class DrawPieceRule(Rule):  # parametrize
     def draw_text(self, game, pos, shape, col):
         self.undraw(game, pos)
 
-        board = game.board
+        board = game.board.tkboard
+
         i, j = pos
-        w, h = board.winfo_width(), board.winfo_height()
-        dx, dy = w / board.nx, h / board.ny
+        dx, dy = board.tile_dims()
         x, y = i * dx + dx/2, j * dy + dy/2
 
         if col:
@@ -227,7 +231,7 @@ class DrawPieceRule(Rule):  # parametrize
         board.piece_tags[(i, j)] = tag
 
     def undraw(self, game, pos):
-        board = game.board
+        board = game.board.tkboard
 
         pos = tuple(pos)
 
@@ -288,16 +292,17 @@ class MarkRule(Rule):
             pos, col = args
 
             board = game.board
+            tkboard = board.tkboard
             piece = board.get_tile(pos).get_piece()
 
             if piece:
-                tag = board.piece_tags[pos]
+                tag = tkboard.piece_tags[pos]
 
-                if board.type(tag) == "image":
+                if tkboard.type(tag) == "image":
                     return [("draw_piece_at_cmap", (pos, piece.shape, col))]
-                elif board.type(tag) == "text":
-                    board.itemconfig(tag, fill=col)
+                elif tkboard.type(tag) == "text":
+                    tkboard.itemconfig(tag, fill=col)
 
 
 __all__ = ['DrawInitRule', 'RedrawRule', 'SelectRule', 'fill_opaque', 'DrawPieceRule', 'MarkCMAPRule', 'hex_to_rgb',
-           'MarkRule', 'DrawSetPieceRule', 'DrawPieceCMAPRule', 'IndicatorRule', 'MarkValidRule', 'search']
+           'MarkRule', 'DrawSetPieceRule', 'DrawPieceCMAPRule', 'IndicatorRule', 'MarkValidRule', 'search_valid']

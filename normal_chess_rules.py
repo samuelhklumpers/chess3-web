@@ -213,7 +213,7 @@ class CastleRule(Rule):
 class PawnPostDouble(Rule):
     def process(self, game: Chess, effect: str, args):
         if effect == "moved":
-            piece = game.get_from_id(args[0])
+            piece = game.get_by_id(args[0])
 
             if piece.shape == "p":
                 dx, dy = unpack2ddr(args[1:])
@@ -231,7 +231,7 @@ class PromoteRule(Rule):
         if effect == "moved":
             board = game.board
             piece_id, start, end = args
-            piece = game.get_from_id(piece_id)
+            piece = game.get_by_id(piece_id)
             shape = piece.shape
             col = piece.get_colour()
 

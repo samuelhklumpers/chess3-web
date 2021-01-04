@@ -33,7 +33,13 @@ def make_online(chess: Chess, whitelist: List[Rule]):
 
 def setup_chess(config: dict, start_positions: str, piece_moves: List[List[Type[Rule]]], post_move: List[Rule], additional: List[Rule]):
     chess = Chess()  # make a blank board game instance
+
+    board = Board(chess)
+    board.make_tiles(NormalTile)
+    chess.set_board(board)
+
     tkchess = TkChess(chess)
+    tkchess.set_counter(PieceCounter())
 
     ruleset = chess.ruleset
 

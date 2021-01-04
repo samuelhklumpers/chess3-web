@@ -149,7 +149,7 @@ class CreatePieceRule(Rule):
 class SetPieceRule(Rule):
     def process(self, game: Chess, effect: str, args):  # args must be a tuple of (tile identifier, object identifier)
         if effect == "set_piece":
-            piece = game.get_from_id(args[1])
+            piece = game.get_by_id(args[1])
 
             game.board.get_tile(args[0]).set_piece(piece)
 
@@ -186,7 +186,7 @@ class AnyRule(Rule):  # warning: ordering side effect
 class MovedRule(Rule):
     def process(self, game: Chess, effect: str, args):
         if effect == "moved":
-            piece = game.get_from_id(args[0])
+            piece = game.get_by_id(args[0])
 
             if isinstance(piece, MovedPiece):
                 piece.moved = game.get_turn_num()
@@ -196,15 +196,15 @@ class CounterRule(Rule):
     def process(self, game: Chess, effect: str, args):
         if effect == "takes":
             taken_id = args[1]
-            piece = game.get_from_id(taken_id)
+            piece = game.get_by_id(taken_id)
 
             if piece:
                 col, shape = piece.get_colour(), piece.shape
 
-                game.counter.increment(col, shape, -1)
+                game.tkchess.counter.increment(col, shape, -1)
         elif effect == "create_piece":
             _, col, shape = args
-            game.counter.increment(col, shape, 1)
+            game.tkchess.counter.increment(col, shape, 1)
 
 
 class WinRule(Rule):

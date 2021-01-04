@@ -34,7 +34,7 @@ class LineOfSightRule(Rule):
                 if piece and piece.get_colour() in game.player:
                     to_draw.add(tile_id)
 
-                    for valid in search(self, game, around=tile_id):
+                    for valid in search_valid(self, game, around=tile_id):
                         to_draw.add(valid)
 
             elist = []
