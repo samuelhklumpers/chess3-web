@@ -3,6 +3,7 @@ import threading
 
 import numpy as np
 import tkinter as tk
+import itertools as itr
 
 from typing import Optional, Callable
 
@@ -136,6 +137,9 @@ class Chess(Game):
     def set_board(self, board: "Board"):
         self.board = board
 
+    def get_board(self):
+        return self.board
+
     def set_socket(self, socket: "socket.socket"):
         self.socket = socket
 
@@ -160,6 +164,9 @@ class Chess(Game):
 
     def get_turn_num(self):
         return self.turn_num
+
+    def get_player(self):
+        return self.player
 
     def load_board_str(self, board_str: str):
         for pos, col, shape in parse_boardstr(board_str):
@@ -205,9 +212,16 @@ class Board:
     def click(self, tile_i):
         self.game.process("touch", tile_i)
 
+    def shape(self):
+        return self.nx, self.ny
+
     def tile_ids(self):
-        for (i, j), v in np.ndenumerate(self.tiles):
-            yield (i, j)
+        nx, ny = self.shape()
+        for i, j in itr.product(range(nx), range(ny)):
+            yield i, j
+
+    def get_game(self):
+        return self.game
 
     def get_piece(self, tile_i):
         return self.get_tile(tile_i).get_piece()
@@ -274,4 +288,15 @@ class TkBoard(tk.Canvas):
         self.board.click(tile_i)
 
 
-__all__ = ["PieceCounter", "NormalTile", "Piece", "MovedPiece", "Pawn", "Chess", "TkChess", "Board", "TkBoard"]
+def search_valid(self, game: Chess, around):  # around must be tile_id
+    self.success_indicator.unset()
+    for tile_id in game.board.tile_ids():
+        self.subruleset.process(self.move0, (around, tile_id))
+
+        if self.success_indicator.is_set():
+            yield tile_id
+
+        self.success_indicator.unset()
+
+
+__all__ = ["PieceCounter", "NormalTile", "Piece", "MovedPiece", "Pawn", "Chess", "TkChess", "Board", "TkBoard", "search_valid"]

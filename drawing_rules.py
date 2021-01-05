@@ -68,36 +68,6 @@ class SelectRule(Rule):
             return ret
 
 
-class IndicatorRule(Rule):
-    def __init__(self, watch):
-        self.triggered = False
-        self.watch = watch
-
-    def set(self):
-        self.triggered = True
-
-    def unset(self):
-        self.triggered = False
-
-    def is_set(self):
-        return self.triggered
-
-    def process(self, game: Chess, effect: str, args):
-        if effect in self.watch:
-            self.set()
-
-
-def search_valid(self, game: Chess, around):  # around must be tile_id
-    self.success_indicator.unset()
-    for tile_id in game.board.tile_ids():
-        self.subruleset.process(self.move0, (around, tile_id))
-
-        if self.success_indicator.is_set():
-            yield tile_id
-
-        self.success_indicator.unset()
-
-
 class MarkValidRule(Rule):
     def __init__(self, subruleset: Ruleset, move0):
         self.subruleset = subruleset
@@ -106,7 +76,6 @@ class MarkValidRule(Rule):
         self.tags = []
 
         self.success_indicator = IndicatorRule(["move_success"])
-
         self.subruleset.add_rule(self.success_indicator)
 
     def process(self, game: Chess, effect: str, args):
@@ -305,4 +274,4 @@ class MarkRule(Rule):
 
 
 __all__ = ['DrawInitRule', 'RedrawRule', 'SelectRule', 'fill_opaque', 'DrawPieceRule', 'MarkCMAPRule', 'hex_to_rgb',
-           'MarkRule', 'DrawSetPieceRule', 'DrawPieceCMAPRule', 'IndicatorRule', 'MarkValidRule', 'search_valid']
+           'MarkRule', 'DrawSetPieceRule', 'DrawPieceCMAPRule', 'MarkValidRule']

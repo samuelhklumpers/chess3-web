@@ -1,5 +1,6 @@
 from typing import List, Type
 
+from lazy_rules import SetPieceRuleL, NextTurnRuleL
 from line_of_sight_rules import *
 from rules import *
 from chess_rules import *
@@ -19,7 +20,7 @@ NETWORK_RULES: List[Rule] = [ReceiveRule("net0"), ColourRollRule("net0", "net1")
 
 def make_actions(move_start: str):
     return [TouchMoveRule(move_start), TakeRule(), MoveTakeRule(),
-            SetPieceRule(), SetPlayerRule(), NextTurnRule()]
+            SetPieceRule(), SetPlayerRule(), NextTurnRule(), WinMessageRule()]
 
 
 def make_online(chess: Chess, whitelist: List[Rule]):
@@ -47,7 +48,23 @@ def setup_chess(config: dict, start_positions: str, special: List[Rule], piece_m
     moves = MOVE_RULES + piece_moves
 
     move0, move_rules, move1 = chain_rules(moves, "move")  # create conditional move chain
-    move_rules += [SuccesfulMoveRule(move1)]  # add succesful move side effect
+    has_check_rule = False
+    if config.get("check", None) is not None:
+        win_cond = config["check"]
+
+        lazy_set = Ruleset(chess)
+        lazy_set.debug = False
+        lazy_actions = [TakeRule(), MoveTakeRule(), SetPieceRuleL(), SetPlayerRule(), NextTurnRuleL()]
+
+        lazy_set.add_all(move_rules + lazy_actions)
+        lazy_set.add_rule(SuccesfulMoveRule(move1))
+        lazy_set.add_rule(win_cond)
+
+        check_rule = CheckRule(move1, "safe_move", move0, lazy_set)
+        has_check_rule = True
+        move_rules += [check_rule, SuccesfulMoveRule("safe_move")]
+    else:
+        move_rules += [SuccesfulMoveRule(move1)]  # add succesful move side effect
 
     actions = make_actions(move0)  # setup standard interactions (e.g. click, move, next turn)
     actions += special
@@ -67,6 +84,11 @@ def setup_chess(config: dict, start_positions: str, special: List[Rule], piece_m
 
         pure_types = [[IdMoveRule], [FriendlyFireRule]] + piece_moves  # pure moves (i.e. no side effects)
         pure0, pure, pure1 = chain_rules(pure_types, "move")
+
+        if has_check_rule:
+            check_rule2 = CheckRule(pure1, "safe_move", pure0, lazy_set)
+            pure1 = "safe_move"
+            pure += [check_rule2]
 
         subruleset = Ruleset(chess)  # create new logic system
         subruleset.debug = False  # beware, setting to True will often generate an unreadable amount of output
@@ -112,10 +134,32 @@ def play_chess(online=True, playback="", record=True):
     start = "wa8Th8Tb8Pg8Pc8Lf8Ld8De8Ka7pb7pc7pd7pe7pf7pg7ph7p;" \
             "ba1Th1Tb1Pg1Pc1Lf1Ld1De1Ka2pb2pc2pd2pe2pf2pg2ph2p"
 
-    cfg = {"online": online, "playback": playback, "record": record, "show_valid": []}
+    cfg = {"online": online, "playback": playback, "record": record, "show_valid": [], "check": WinRule()}
 
     chess, tkchess = setup_chess(cfg, start, special, move_rules, post_move, additional)
     tkchess.mainloop()  # start the game
+
+
+def test():
+    special = [CreatePieceRule({"K": MovedPiece, "p": Pawn, "T": MovedPiece})]
+
+    move_rules= [[PawnSingleRule, PawnDoubleRule, PawnTakeRule, PawnEnPassantRule, KnightRule,
+                  BishopRule, RookRule, QueenRule, KingRule, CastleRule]]  # add all normal chess moves
+
+    post_move = [DrawSetPieceRule(), MovedRule(), PawnPostDouble(),
+                 PromoteRule(["p"], ["L", "P", "T", "D"]), # special rules for pawn, rook and king
+                 WinRule(), WinCloseRule()]
+
+    additional = [CounterRule()]  # piece counter addon
+
+    start = "wa8Th8Tb8Pg8Pc8Lf8Ld8De8Ka7pb7pc7pd7pe7pf7pg7ph7p;" \
+            "ba1Th1Tb1Pg1Pc1Lf1Ld1De1Ka2pb2pc2pd2pe2pf2pg2ph2p"
+
+    cfg = {"show_valid": []}
+
+    chess, tkchess = setup_chess(cfg, start, special, move_rules, post_move, additional)
+
+    return chess
 
 
 def play_fairy(online=True, playback="", record=True):
@@ -162,4 +206,4 @@ def play_los(online=True, playback="", record=True):
 
 
 if __name__ == '__main__':
-    play_fairy(online=True, record=False)
+    chess = play_chess(False, record=False)

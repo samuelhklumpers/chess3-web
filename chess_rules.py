@@ -15,7 +15,7 @@ class TouchMoveRule(Rule):
 
     def process(self, game: Chess, effect: str, args):  # args must be a tile identifier corresponding to the board
         if effect == "touch":
-            piece = game.board.get_tile(args).get_piece()
+            piece = game.get_board().get_tile(args).get_piece()
 
             if self.prev:
                 prev, self.prev = self.prev, None
@@ -47,7 +47,7 @@ class MoveTurnRule(Rule):
 
     def process(self, game: Chess, effect: str, args):
         if effect == self.cause:
-            piece = game.board.get_tile(args[0]).get_piece()
+            piece = game.get_board().get_tile(args[0]).get_piece()
 
             if piece:  # how does this become None?
                 if piece.get_colour() == game.get_turn():
@@ -63,9 +63,9 @@ class MovePlayerRule(Rule):
 
     def process(self, game: Chess, effect: str, args):
         if effect == self.cause:
-            piece = game.board.get_tile(args[0]).get_piece()
+            piece = game.get_board().get_tile(args[0]).get_piece()
 
-            if piece.get_colour() in game.player:
+            if piece.get_colour() in game.get_player():
                 return [(self.consequence, args)]
             else:
                 return []
@@ -78,8 +78,8 @@ class FriendlyFireRule(Rule):
 
     def process(self, game: Chess, effect: str, args):
         if effect == self.cause:
-            moving_piece = game.board.get_tile(args[0]).get_piece()
-            taken_piece = game.board.get_tile(args[1]).get_piece()
+            moving_piece = game.get_board().get_tile(args[0]).get_piece()
+            taken_piece = game.get_board().get_tile(args[1]).get_piece()
 
             if taken_piece and moving_piece.get_colour() == taken_piece.get_colour():
                 return
@@ -99,8 +99,8 @@ class SuccesfulMoveRule(Rule):
 class MoveTakeRule(Rule):
     def process(self, game: Chess, effect: str, args):
         if effect == "move_success":
-            moving_piece = game.board.get_tile(args[0]).get_piece()
-            taken_piece = game.board.get_tile(args[1]).get_piece()
+            moving_piece = game.get_board().get_tile(args[0]).get_piece()
+            taken_piece = game.get_board().get_tile(args[1]).get_piece()
 
             moving_id = game.get_id(moving_piece)
             taken_id = game.get_id(taken_piece)
@@ -120,7 +120,7 @@ class MoveTakeRule(Rule):
 class TakeRule(Rule):
     def process(self, game: Chess, effect: str, args):
         if effect == "take":
-            taken_piece = game.board.get_tile(args).get_piece()
+            taken_piece = game.get_board().get_tile(args).get_piece()
             null_id = game.get_id(None)
             taken_id = game.get_id(taken_piece)
             return [("set_piece", (args, null_id)), ("takes", (null_id, taken_id, args, args))]
@@ -147,7 +147,7 @@ class SetPieceRule(Rule):
         if effect == "set_piece":
             piece = game.get_by_id(args[1])
 
-            game.board.get_tile(args[0]).set_piece(piece)
+            game.get_board().get_tile(args[0]).set_piece(piece)
 
             return [("piece_set", args)]
 
@@ -165,18 +165,6 @@ class NextTurnRule(Rule):
             game.turn_num += 1
 
             return [("turn_changed", ())]
-
-
-class AnyRule(Rule):  # warning: ordering side effect
-    def __init__(self, rules: List[Rule]):
-        self.rules = rules
-
-    def process(self, game, effect, args):
-        for rule in self.rules:
-            elist = rule.process(game, effect, args)
-
-            if elist:
-                return elist
 
 
 class MovedRule(Rule):
@@ -208,7 +196,8 @@ class WinRule(Rule):
         if effect == "takes":
             kings = {}
 
-            for tile in game.board.tiles.flat:
+            for tile_id in game.get_board().tile_ids():
+                tile = game.get_board().get_tile(tile_id)
                 piece = tile.get_piece()
 
                 if piece and piece.shape == "K":
@@ -219,11 +208,15 @@ class WinRule(Rule):
             n_alive = len(alive)
 
             if n_alive == 1:
-                print(alive[0], "wins")
                 return [("wins", alive[0])]
             elif n_alive == 0:
-                print("draw")
                 return [("wins", None)]
+
+
+class WinMessageRule(Rule):
+    def process(self, game: Chess, effect: str, args):
+        if effect == "wins":
+            print("wins", args)
 
 
 class WinCloseRule(Rule):
@@ -289,5 +282,6 @@ class ExitRule(Rule):
 
 
 __all__ = ['TouchMoveRule', 'IdMoveRule', 'MoveTurnRule', 'MovePlayerRule', 'FriendlyFireRule', 'SuccesfulMoveRule',
-           'MoveTakeRule', 'TakeRule', 'CreatePieceRule', 'SetPieceRule', 'MoveRedrawRule', 'NextTurnRule', 'AnyRule',
-           'MovedRule', 'CounterRule', 'WinRule', 'WinCloseRule', 'SetPlayerRule', 'RecordRule', 'PlaybackRule', 'ExitRule']
+           'MoveTakeRule', 'TakeRule', 'CreatePieceRule', 'SetPieceRule', 'MoveRedrawRule', 'NextTurnRule',
+           'MovedRule', 'CounterRule', 'WinRule', 'WinMessageRule', 'WinCloseRule', 'SetPlayerRule', 'RecordRule',
+           'PlaybackRule', 'ExitRule']
