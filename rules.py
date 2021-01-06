@@ -1,6 +1,6 @@
 from typing import List
 
-from structures import Game
+from structures import *
 
 
 class Rule:

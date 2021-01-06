@@ -49,7 +49,7 @@ def setup_chess(config: dict, start_positions: str, special: List[Rule], piece_m
 
     move0, move_rules, move1 = chain_rules(moves, "move")  # create conditional move chain
     has_check_rule = False
-    if config.get("check", None) is not None:
+    if config.get("check", None) is not None:  # warning dangerous experimental option, leaves the game in tie on checkmate, turns will take >1s to calculate
         win_cond = config["check"]
 
         lazy_set = Ruleset(chess)
@@ -134,7 +134,7 @@ def play_chess(online=True, playback="", record=True):
     start = "wa8Th8Tb8Pg8Pc8Lf8Ld8De8Ka7pb7pc7pd7pe7pf7pg7ph7p;" \
             "ba1Th1Tb1Pg1Pc1Lf1Ld1De1Ka2pb2pc2pd2pe2pf2pg2ph2p"
 
-    cfg = {"online": online, "playback": playback, "record": record, "show_valid": [], "check": WinRule()}
+    cfg = {"online": online, "playback": playback, "record": record, "show_valid": []}
 
     chess, tkchess = setup_chess(cfg, start, special, move_rules, post_move, additional)
     tkchess.mainloop()  # start the game
@@ -206,4 +206,4 @@ def play_los(online=True, playback="", record=True):
 
 
 if __name__ == '__main__':
-    chess = play_chess(False, record=False)
+    chess = play_fairy(online=True, playback="", record=False)

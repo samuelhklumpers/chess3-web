@@ -1,5 +1,4 @@
 from chess_structures import *
-from drawing_rules import *
 from rules import *
 from structures import *
 from colours import *
