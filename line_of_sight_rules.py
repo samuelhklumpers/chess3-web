@@ -16,9 +16,12 @@ class LineOfSightRule(Rule):
         if effect == "move_success":
             elist = []
 
-            for tile_id in game.board.tile_ids():
-                tag = game.board.tile_tags[tile_id]
-                game.board.itemconfig(tag, fill=HEXCOL["fog"])
+            board = game.board
+            tkboard = board.tkboard
+
+            for tile_id in board.tile_ids():
+                tag = tkboard.tile_tags[tile_id]
+                tkboard.itemconfig(tag, fill=HEXCOL["fog"])
                 elist += [("draw_piece_at", (tile_id, "", ""))]
 
             return elist
@@ -26,8 +29,11 @@ class LineOfSightRule(Rule):
         if effect == "turn_changed":
             to_draw = set()
 
-            for tile_id in game.board.tile_ids():
-                tile = game.board.get_tile(tile_id)
+            board = game.board
+            tkboard = board.tkboard
+
+            for tile_id in board.tile_ids():
+                tile = board.get_tile(tile_id)
                 piece = tile.get_piece()
 
                 if piece and piece.get_colour() in game.player:
@@ -38,13 +44,13 @@ class LineOfSightRule(Rule):
 
             elist = []
             for tile_id in to_draw:
-                tag = game.board.tile_tags[tile_id]
+                tag = tkboard.tile_tags[tile_id]
 
                 i, j = tile_id
                 parity = (i + j) % 2
                 col = HEXCOL["tile_white"] if parity else HEXCOL["tile_brown"]
 
-                game.board.itemconfig(tag, fill=col)
+                tkboard.itemconfig(tag, fill=col)
                 elist += [("draw_piece", tile_id)]
 
             return elist

@@ -185,19 +185,17 @@ def play_fairy(online=True, playback="", record=True):
 def play_los(online=True, playback="", record=True):
     special = [CreatePieceRule({})]
 
-    move_rules= [[PawnSingleRule, PawnDoubleRule, PawnTakeRule, PawnEnPassantRule, KnightRule,
-                  BishopRule, RookRule, QueenRule, KingRule]]  # add all normal chess moves
+    move_rules = [[FerzRule, JumperRule, KirinRule, ShooterRule, WheelRule, KingRule]]
 
-    post_move = [MovedRule(), PawnPostDouble(),
-                 PromoteRule(["p"], ["L", "P", "T", "D"]), # special rules for pawn, rook and king
+    post_move = [PromoteRule(["F"], ["J", "C", "S", "W"]),
                  WinRule(), WinCloseRule()]
 
     show_valid = [LineOfSightRule]
 
     additional = [CounterRule()]  # piece counter addon
 
-    start = "wa8Th8Tb8Pg8Pc8Lf8Ld8De8Ka7pb7pc7pd7pe7pf7pg7ph7p;" \
-            "ba1Th1Tb1Pg1Pc1Lf1Ld1De1Ka2pb2pc2pd2pe2pf2pg2ph2p"
+    start = "wa8Sh8Sb8Jg8Jc8Cf8Cd8We8Ka7Fb7Fc7Fd7Fe7Ff7Fg7Fh7F;"\
+            "ba1Sh1Sb1Jg1Jc1Cf1Cd1We1Ka2Fb2Fc2Fd2Fe2Ff2Fg2Fh2F"
 
     cfg = {"online": online, "playback": playback, "record": record, "show_valid": show_valid}
 
@@ -206,4 +204,4 @@ def play_los(online=True, playback="", record=True):
 
 
 if __name__ == '__main__':
-    chess = play_fairy(online=True, playback="", record=False)
+    play_los(online=True, playback="", record=False)
