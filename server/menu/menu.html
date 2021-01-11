@@ -1,0 +1,61 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    <meta charset="UTF-8">
+    <head>
+        <title>Chess Config Menu</title>
+        <style type="text/css">
+            body {
+                font-family: "Courier New", sans-serif;
+                text-align: center;
+            }
+            .buttons {
+                font-size: 2em;
+                display: flex;
+                justify-content: center;
+            }
+            .button {
+                line-height: 1;
+                padding: 2rem;
+                margin: 2rem;
+                border: medium solid;
+                min-height: 1em;
+                min-width: 1em;
+                cursor: pointer;
+                user-select: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="buttons">
+            <div class="normalchess button">Normal</div>
+            <div class="fairychess button">Fairy</div>
+            <div class="lineofchess button">Line of Sight</div>
+        </div>
+        <form>
+              <label for="roomform">Room:</label>
+              <input type="text" id="roomform" name="roomform"><br>
+              <label for="userform">User:</label>
+              <input type="text" id="userform" name="userform"><br>
+        </form>
+        <script>
+            var normal = document.querySelector('.normalchess'),
+                fairy = document.querySelector('.fairychess'),
+                line = document.querySelector('.lineofchess'),
+                room = document.querySelector('#roomform'),
+                user = document.querySelector('#userform');
+
+            normal.onclick = function (event) {
+                window.location.href = "/game.html?room=" + room.value + "&mode=normal&user=" + user.value;
+            };
+
+            fairy.onclick = function (event) {
+                window.location.href = "/game.html?room=" + room.value + "&mode=fairy&user=" + user.value;
+            };
+
+            line.onclick = function (event) {
+                window.location.href = "/game.html?room=" + room.value + "&mode=line&user=" + user.value;
+            };
+        </script>
+    </body>
+</html>
