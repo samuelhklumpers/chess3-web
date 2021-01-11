@@ -1,8 +1,14 @@
 import asyncio
 import json
-import websockets
+import threading
+import time
+import os
+import traceback
 
-from server.daemon import Daemon
+import websockets
+import datetime
+
+
 from server.server_rules import *
 from rules.chess_rules import *
 from rules.normal_chess_rules import *
@@ -181,22 +187,48 @@ class ServerState:
             ...
 
 
-class ServerDaemon(Daemon):
-    def __init__(self):
-        Daemon.__init__(self, "game_daemon.pid")
-
-        self.ss = None
-
-    def run(self):
-        self.ss = ServerState()
-        self.ss.run()
-
-    def cleanup(self):
-        if self.ss:
-            for room in self.ss.games:
-                self.ss.close_room(room)
+shared = {"responsive": True, "errors": []}
 
 
-if __name__ == "__main__":
-    ss = ServerState()
-    ss.run()
+def thread_loop():
+    while True:
+        errors = []
+        for e in shared["errors"]:
+            now = datetime.datetime.utcnow()
+            if now - e < datetime.timedelta(minutes=10):
+                errors.append(e)
+
+        if len(errors) > 4:
+            with open("gameserver.log", mode="a") as f:
+                f.write("Errored 5 times in 10 minutes, exiting\n")
+                return
+
+        th = threading.Thread(target=open_server())
+        th.start()
+
+        while th.is_alive() and shared["responsive"]:
+            shared["responsive"] = False
+            th.join(10)
+
+        if th.is_alive() and not shared["responsive"]:
+            with open("gameserver.log", mode="a") as f:
+                f.write("Server thread unresponsive\n")
+                os._exit(0)
+
+        time.sleep(10)
+
+
+def open_server():
+    async def set_responsive():
+        while True:
+            shared["responsive"] = True
+            await asyncio.sleep(5)
+
+    try:
+        asyncio.run_coroutine_threadsafe(set_responsive(), asyncio.get_event_loop())
+        ss = ServerState()
+        ss.run()
+    except:
+        with open("gameserver.log", mode="a") as f:
+            traceback.print_exc(file=f)
+            shared["errors"] += [datetime.datetime.utcnow()]
