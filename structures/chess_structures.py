@@ -7,9 +7,9 @@ import itertools as itr
 
 from typing import Optional, Callable
 
-from structures import *
-from util import *
-from colours import *
+from structures.structures import *
+from util.util import *
+from structures.colours import *
 
 
 class PieceCounter(tk.Frame):
@@ -210,7 +210,7 @@ class Board:
             self.tiles[ix] = tile_constr()
 
     def click(self, tile_i):
-        self.game.process("touch", tile_i)
+        self.game.process("touch", (tile_i, self.game.get_player()))
 
     def shape(self):
         return self.nx, self.ny

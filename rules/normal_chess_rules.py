@@ -1,15 +1,17 @@
 from tkinter import simpledialog
 from typing import List
 
-from lazy_structures import RefChess
-from rules import *
-from chess_structures import *
-from structures import Ruleset
-from util import *
+from structures.lazy_structures import RefChess
+from rules.rules import *
+from structures.chess_structures import *
+from structures.structures import Ruleset
+from util.util import *
 
 
 class PawnSingleRule(Rule):
     def __init__(self, cause: str, consequence: str):
+        Rule.__init__(self, watch=[cause])
+
         self.cause = cause
         self.consequence = consequence
 
@@ -27,6 +29,8 @@ class PawnSingleRule(Rule):
 
 class PawnDoubleRule(Rule):
     def __init__(self, cause: str, consequence: str):
+        Rule.__init__(self, watch=[cause])
+
         self.cause = cause
         self.consequence = consequence
 
@@ -44,6 +48,8 @@ class PawnDoubleRule(Rule):
 
 class PawnTakeRule(Rule):
     def __init__(self, cause: str, consequence: str):
+        Rule.__init__(self, watch=[cause])
+
         self.cause = cause
         self.consequence = consequence
 
@@ -62,6 +68,8 @@ class PawnTakeRule(Rule):
 
 class PawnEnPassantRule(Rule):  # warning: will generate duplicate moves when pawns pass through pieces on a double move
     def __init__(self, cause: str, consequence: str):
+        Rule.__init__(self, watch=[cause])
+
         self.cause = cause
         self.consequence = consequence
 
@@ -84,6 +92,8 @@ class PawnEnPassantRule(Rule):  # warning: will generate duplicate moves when pa
 
 class KnightRule(Rule):
     def __init__(self, cause: str, consequence: str):
+        Rule.__init__(self, watch=[cause])
+
         self.cause = cause
         self.consequence = consequence
 
@@ -99,6 +109,8 @@ class KnightRule(Rule):
 
 class BishopRule(Rule):
     def __init__(self, cause: str, consequence: str):
+        Rule.__init__(self, watch=[cause])
+
         self.cause = cause
         self.consequence = consequence
 
@@ -120,6 +132,8 @@ class BishopRule(Rule):
 
 class RookRule(Rule):
     def __init__(self, cause: str, consequence: str):
+        Rule.__init__(self, watch=[cause])
+
         self.cause = cause
         self.consequence = consequence
 
@@ -141,6 +155,8 @@ class RookRule(Rule):
 
 class QueenRule(Rule):
     def __init__(self, cause: str, consequence: str):
+        Rule.__init__(self, watch=[cause])
+
         self.cause = cause
         self.consequence = consequence
 
@@ -162,6 +178,8 @@ class QueenRule(Rule):
 
 class KingRule(Rule):
     def __init__(self, cause: str, consequence: str):
+        Rule.__init__(self, watch=[cause])
+
         self.cause = cause
         self.consequence = consequence
 
@@ -177,6 +195,8 @@ class KingRule(Rule):
 
 class CastleRule(Rule):
     def __init__(self, cause: str, consequence: str):
+        Rule.__init__(self, watch=[cause])
+
         self.cause = cause
         self.consequence = consequence
 
@@ -207,6 +227,9 @@ class CastleRule(Rule):
 
 
 class PawnPostDouble(Rule):
+    def __init__(self):
+        Rule.__init__(self, watch=["moved"])
+
     def process(self, game: Chess, effect: str, args):
         if effect == "moved":
             piece = game.get_by_id(args[0])
@@ -220,6 +243,8 @@ class PawnPostDouble(Rule):
 
 class PromoteRule(Rule):
     def __init__(self, eligible: List[str], promotions: List[str]):
+        Rule.__init__(self, watch=["moved"])
+
         self.eligible = eligible
         self.promotions = promotions
 
@@ -243,13 +268,15 @@ class PromoteRule(Rule):
                     elist = []
                     elist += [("take", end)]
                     # avoid this ^ and skip to cleanup when using exploding pieces or so
-                    if promotion:
+                    if promotion in self.promotions:
                         elist += [("create_piece", (end, col, promotion))]
                     return elist
 
 
 class CheckRule(Rule):
     def __init__(self, cause: str, consequence: str, move0: str, lazy_set: Ruleset):
+        Rule.__init__(self, watch=[cause])
+
         self.move0 = move0
         self.cause = cause
         self.consequence = consequence

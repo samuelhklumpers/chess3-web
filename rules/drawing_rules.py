@@ -5,10 +5,10 @@ import numpy as np
 from PIL import Image
 from PIL import ImageTk
 
-from chess_structures import *
-from rules import *
-from structures import *
-from colours import *
+from structures.chess_structures import *
+from rules.rules import *
+from structures.structures import *
+from structures.colours import *
 
 
 def fill_opaque(arr, col):
@@ -27,12 +27,18 @@ def hex_to_rgb(value):
 
 
 class DrawInitRule(Rule):
+    def __init__(self):
+        Rule.__init__(self, watch=["init"])
+
     def process(self, game: Chess, effect, args):
         if effect == "init":
             return [("redraw", ())]
 
 
 class RedrawRule(Rule):
+    def __init__(self):
+        Rule.__init__(self, watch=["redraw"])
+
     def process(self, game: Chess, effect, args):
         if effect == "redraw":
             board = game.board
@@ -50,18 +56,21 @@ class RedrawRule(Rule):
 
 class SelectRule(Rule):
     def __init__(self):
+        Rule.__init__(self, watch=["select"])
+
         self.selected = None
 
     def process(self, game: Chess, effect, args):
         if effect == "select":
+            pos = args[0]
             ret = []
 
             if self.selected:
-                ret += [("mark_cmap", (args, "normal")), ("unselected", self.selected)]
+                ret += [("mark_cmap", (pos, "normal")), ("unselected", self.selected)]
 
-            if args != self.selected:
-                self.selected = args
-                ret += [("mark_cmap", (args, HEXCOL["select"])), ("selected" , args)]
+            if pos != self.selected:
+                self.selected = pos
+                ret += [("mark_cmap", (pos, HEXCOL["select"])), ("selected" , pos)]
             else:
                 self.selected = None
 
@@ -70,6 +79,7 @@ class SelectRule(Rule):
 
 class MarkValidRule(Rule):
     def __init__(self, subruleset: Ruleset, move0):
+        Rule.__init__(self, watch=["selected", "unselected"])
         self.subruleset = subruleset
         self.move0 = move0
 
@@ -96,6 +106,9 @@ class MarkValidRule(Rule):
 
 
 class DrawSetPieceRule(Rule):
+    def __init__(self):
+        Rule.__init__(self, watch=["piece_set"])
+
     def process(self, game: Chess, effect: str, args):
         if effect == "piece_set":
             pos, piece_id = args
@@ -111,6 +124,10 @@ class DrawSetPieceRule(Rule):
 class DrawPieceCMAPRule(Rule):
     cmap = HEXCOL.copy()
 
+    def __init__(self):
+        Rule.__init__(self, watch=["draw_piece_at_cmap"])
+
+
     def process(self, game: Chess, effect, args):
         if effect == "draw_piece_at_cmap":
             pos, shape, col = args
@@ -123,6 +140,8 @@ class DrawPieceCMAPRule(Rule):
 
 class DrawPieceRule(Rule):  # parametrize
     def __init__(self):
+        Rule.__init__(self, watch=["draw_piece", "draw_piece_at"])
+
         self.folder = "images"
         self.files = {"K": "king.png", "D": "queen.png", "T": "rook.png",
                       "L": "bishop.png", "P": "knight.png", "p": "pawn.png",
@@ -239,6 +258,9 @@ class DrawPieceRule(Rule):  # parametrize
 class MarkCMAPRule(Rule):
     cmap = HEXCOL.copy()
 
+    def __init__(self):
+        Rule.__init__(self, watch=["mark_cmap"])
+
     def process(self, game: Chess, effect, args):
         if effect == "mark_cmap":
             pos, col = args
@@ -256,6 +278,9 @@ class MarkCMAPRule(Rule):
 
 
 class MarkRule(Rule):
+    def __init__(self):
+        Rule.__init__(self, watch=["mark"])
+
     def process(self, game: Chess, effect, args):
         if effect == "mark":
             pos, col = args
@@ -265,7 +290,7 @@ class MarkRule(Rule):
             piece = board.get_tile(pos).get_piece()
 
             if piece:
-                tag = tkboard.piece_tags[pos]
+                tag = tkboard.piece_tags[pos]  # TODO los mark error.png
 
                 if tkboard.type(tag) == "image":
                     return [("draw_piece_at_cmap", (pos, piece.shape, col))]

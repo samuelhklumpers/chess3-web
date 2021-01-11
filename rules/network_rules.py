@@ -5,8 +5,8 @@ import traceback
 
 from typing import List
 
-from chess_structures import *
-from rules import *
+from structures.chess_structures import *
+from rules.rules import *
 
 
 class ColourRollRule(Rule):

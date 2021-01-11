@@ -1,15 +1,20 @@
 from typing import List
 
-from structures import *
+from structures.structures import *
 
 
 class Rule:
+    def __init__(self, watch: List[str] = None):
+        self.watch = ["all"] if watch is None else watch
+
     def process(self, game: Game, effect: str, args):
         ...
 
 
 class AnyRule(Rule):  # warning: ordering side effect
     def __init__(self, rules: List[Rule]):
+        Rule.__init__(self, watch=[w for r in rules for w in r.watch])
+
         self.rules = rules
 
     def process(self, game: Game, effect: str, args):
@@ -22,8 +27,9 @@ class AnyRule(Rule):  # warning: ordering side effect
 
 class IndicatorRule(Rule):
     def __init__(self, watch: List[str]):
+        Rule.__init__(self, watch=watch)
+
         self.triggered = False
-        self.watch = watch
 
     def set(self, v):
         self.triggered = v

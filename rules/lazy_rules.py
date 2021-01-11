@@ -1,5 +1,5 @@
-from rules import *
-from lazy_structures import *
+from rules.rules import *
+from structures.lazy_structures import *
 
 
 class SetPieceRuleL(Rule):

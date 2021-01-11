@@ -1,4 +1,4 @@
-from chess_structures import *
+from structures.chess_structures import *
 
 
 class RefChess(Chess):

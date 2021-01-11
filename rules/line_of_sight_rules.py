@@ -1,11 +1,13 @@
-from chess_structures import *
-from rules import *
-from structures import *
-from colours import *
+from structures.chess_structures import *
+from rules.rules import *
+from structures.structures import *
+from structures.colours import *
 
 
 class LineOfSightRule(Rule):
     def __init__(self, subruleset: Ruleset, move0):
+        Rule.__init__(self, watch=["move_success", "turn_changed"])
+
         self.subruleset = subruleset
         self.move0 = move0
 

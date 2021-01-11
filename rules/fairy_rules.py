@@ -1,5 +1,5 @@
-from chess_rules import Rule
-from util import *
+from rules.chess_rules import Rule
+from util.util import *
 
 
 def unpack2ddr(args):
@@ -13,6 +13,8 @@ def unpack2ddr(args):
 
 class FerzRule(Rule):
     def __init__(self, ein, eout):
+        Rule.__init__(self, watch=[ein])
+
         self.ein = ein
         self.eout = eout
 
@@ -28,6 +30,8 @@ class FerzRule(Rule):
 
 class JumperRule(Rule):
     def __init__(self, ein, eout):
+        Rule.__init__(self, watch=[ein])
+
         self.ein = ein
         self.eout = eout
 
@@ -58,6 +62,8 @@ class JumperRule(Rule):
 
 class KirinRule(Rule):
     def __init__(self, ein, eout):
+        Rule.__init__(self, watch=[ein])
+
         self.ein = ein
         self.eout = eout
 
@@ -76,6 +82,8 @@ class KirinRule(Rule):
 
 class ShooterRule(Rule):
     def __init__(self, ein, eout):
+        Rule.__init__(self, watch=[ein])
+
         self.ein = ein
         self.eout = eout
 
@@ -85,8 +93,6 @@ class ShooterRule(Rule):
             if piece.shape == "S":
                 x1, y1 = args[0]
                 x2, y2 = args[1]
-
-                moving_id = game.get_id(piece)
 
                 dx, dy = x2 - x1, y2 - y1
 
@@ -106,6 +112,8 @@ class ShooterRule(Rule):
 
 class WheelRule(Rule):
     def __init__(self, ein, eout):
+        Rule.__init__(self, watch=[ein])
+
         self.ein = ein
         self.eout = eout
 

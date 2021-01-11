@@ -1,25 +1,33 @@
 import datetime
 import json
 
-from typing import List, Dict, Callable
+from typing import Dict, Callable
 
-from rules import *
-from structures import *
-from chess_structures import *
+from rules.rules import *
+from structures.structures import *
+from structures.chess_structures import *
 
 
 class TouchMoveRule(Rule):
     def __init__(self, consequence: str):
+        Rule.__init__(self, watch=["touch"])
+
         self.prev = None
         self.consequence = consequence
 
     def process(self, game: Chess, effect: str, args):  # args must be a tile identifier corresponding to the board
         if effect == "touch":
-            piece = game.get_board().get_tile(args).get_piece()
+            if game.get_turn() not in args[1]:
+                return
+
+            piece = game.get_board().get_tile(args[0]).get_piece()
 
             if self.prev:
                 prev, self.prev = self.prev, None
-                return [(self.consequence, (prev, args)), ("select", prev)]
+
+                m1, m2 = prev[0], args[0]
+                p = prev[1]
+                return [(self.consequence, (m1, m2, p)), ("select", prev)]
             elif piece:
                 self.prev = args
                 return [("select", args)]
@@ -29,6 +37,8 @@ class TouchMoveRule(Rule):
 
 class IdMoveRule(Rule):
     def __init__(self, cause: str, consequence: str):
+        Rule.__init__(self, watch=[cause])
+
         self.cause = cause
         self.consequence = consequence
 
@@ -42,12 +52,17 @@ class IdMoveRule(Rule):
 
 class MoveTurnRule(Rule):
     def __init__(self, cause: str, consequence: str):
+        Rule.__init__(self, watch=[cause])
+
         self.cause = cause
         self.consequence = consequence
 
     def process(self, game: Chess, effect: str, args):
         if effect == self.cause:
             piece = game.get_board().get_tile(args[0]).get_piece()
+
+            print(piece, args)
+            print(piece.get_colour(), game.get_turn())
 
             if piece:  # how does this become None?
                 if piece.get_colour() == game.get_turn():
@@ -58,6 +73,8 @@ class MoveTurnRule(Rule):
 
 class MovePlayerRule(Rule):
     def __init__(self, cause: str, consequence: str):
+        Rule.__init__(self, watch=[cause])
+
         self.cause = cause
         self.consequence = consequence
 
@@ -65,7 +82,7 @@ class MovePlayerRule(Rule):
         if effect == self.cause:
             piece = game.get_board().get_tile(args[0]).get_piece()
 
-            if piece.get_colour() in game.get_player():
+            if piece.get_colour() in args[2]:
                 return [(self.consequence, args)]
             else:
                 return []
@@ -73,6 +90,8 @@ class MovePlayerRule(Rule):
 
 class FriendlyFireRule(Rule):
     def __init__(self, cause: str, consequence: str):
+        Rule.__init__(self, watch=[cause])
+
         self.cause = cause
         self.consequence = consequence
 
@@ -89,6 +108,8 @@ class FriendlyFireRule(Rule):
 
 class SuccesfulMoveRule(Rule):
     def __init__(self, cause: str):
+        Rule.__init__(self, watch=[cause])
+
         self.cause = cause
 
     def process(self, game: Chess, effect: str, args):
@@ -97,6 +118,9 @@ class SuccesfulMoveRule(Rule):
 
 
 class MoveTakeRule(Rule):
+    def __init__(self):
+        Rule.__init__(self, watch=["move_success"])
+
     def process(self, game: Chess, effect: str, args):
         if effect == "move_success":
             moving_piece = game.get_board().get_tile(args[0]).get_piece()
@@ -118,6 +142,9 @@ class MoveTakeRule(Rule):
 
 
 class TakeRule(Rule):
+    def __init__(self):
+        Rule.__init__(self, watch=["take"])
+
     def process(self, game: Chess, effect: str, args):
         if effect == "take":
             taken_piece = game.get_board().get_tile(args).get_piece()
@@ -128,6 +155,8 @@ class TakeRule(Rule):
 
 class CreatePieceRule(Rule):
     def __init__(self, constructors: Dict[str, Callable[[str, str], Piece]]):
+        Rule.__init__(self, watch=["create_piece"])
+
         self.constrs = constructors
 
     def process(self, game: Chess, effect: str, args):
@@ -143,6 +172,9 @@ class CreatePieceRule(Rule):
 
 
 class SetPieceRule(Rule):
+    def __init__(self):
+        Rule.__init__(self, watch=["set_piece"])
+
     def process(self, game: Chess, effect: str, args):  # args must be a tuple of (tile identifier, object identifier)
         if effect == "set_piece":
             piece = game.get_by_id(args[1])
@@ -153,21 +185,34 @@ class SetPieceRule(Rule):
 
 
 class MoveRedrawRule(Rule):
+    def __init__(self):
+        Rule.__init__(self, watch=["moved"])
+
     def process(self, game: Chess, effect: str, args):
         if effect == "moved":
             return [("redraw", ())]
 
 
 class NextTurnRule(Rule):
+    def __init__(self):
+        Rule.__init__(self, watch=["moved"])
+
     def process(self, game: Chess, effect: str, args):
         if effect == "moved":
-            game.turn = "b" if game.turn == "w" else "w"
+            if game.turn == "w":
+                game.turn = "b"
+            elif game.turn == "b":
+                game.turn = "w"
+
             game.turn_num += 1
 
             return [("turn_changed", ())]
 
 
 class MovedRule(Rule):
+    def __init__(self):
+        Rule.__init__(self, watch=["moved"])
+
     def process(self, game: Chess, effect: str, args):
         if effect == "moved":
             piece = game.get_by_id(args[0])
@@ -177,6 +222,9 @@ class MovedRule(Rule):
 
 
 class CounterRule(Rule):
+    def __init__(self):
+        Rule.__init__(self, watch=["takes", "create_piece"])
+
     def process(self, game: Chess, effect: str, args):
         if effect == "takes":
             taken_id = args[1]
@@ -192,6 +240,9 @@ class CounterRule(Rule):
 
 
 class WinRule(Rule):
+    def __init__(self):
+        Rule.__init__(self, watch=["takes"])
+
     def process(self, game: Chess, effect: str, args):
         if effect == "takes":
             kings = {}
@@ -214,18 +265,27 @@ class WinRule(Rule):
 
 
 class WinMessageRule(Rule):
+    def __init__(self):
+        Rule.__init__(self, watch=["wins"])
+
     def process(self, game: Chess, effect: str, args):
         if effect == "wins":
             print("wins", args)
 
 
 class WinCloseRule(Rule):
+    def __init__(self):
+        Rule.__init__(self, watch=["wins"])
+
     def process(self, game: Game, effect: str, args):
         if effect == "wins":
             return [("exit", ())]
 
 
 class SetPlayerRule(Rule):
+    def __init__(self):
+        Rule.__init__(self, watch=["set_player"])
+
     def process(self, game: Chess, effect: str, args):
         if effect == "set_player":
             game.player = args
@@ -235,6 +295,8 @@ class SetPlayerRule(Rule):
 
 class RecordRule(Rule):
     def __init__(self):
+        Rule.__init__(self, watch=["moved", "exit"])
+
         self.start = datetime.datetime.now()
         self.log = []
 
@@ -252,6 +314,8 @@ class RecordRule(Rule):
 
 class PlaybackRule(Rule):
     def __init__(self, game: Chess, fn: str, move0: str):
+        Rule.__init__(self)
+
         game.tkchess.bind("<Return>", self.step)
 
         self.move0 = move0
@@ -275,6 +339,9 @@ class PlaybackRule(Rule):
 
 
 class ExitRule(Rule):
+    def __init__(self):
+        Rule.__init__(self, watch=["exit"])
+
     def process(self, game: Chess, effect: str, args):
         if effect == "exit":
             print("exiting")
