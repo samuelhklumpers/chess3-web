@@ -20,7 +20,7 @@ NETWORK_RULES: List[Rule] = [ReceiveRule("net0"), ColourRollRule("net0", "net1")
 
 def make_actions(move_start: str):
     return [TouchMoveRule(move_start), TakeRule(), MoveTakeRule(),
-            SetPieceRule(), SetPlayerRule(), NextTurnRule(), WinMessageRule()]
+            SetPieceRule(), SetPlayerRule(), WinMessageRule()]
 
 
 def make_online(chess: Chess, whitelist: List[Rule]):
@@ -46,6 +46,9 @@ def setup_chess(config: dict, start_positions: str, special: List[Rule], piece_m
     ruleset = chess.ruleset
 
     moves = MOVE_RULES + piece_moves
+    late = [NextTurnRule()]
+
+    ruleset.add_all(late, prio=-2)
 
     move0, move_rules, move1 = chain_rules(moves, "move")  # create conditional move chain
     has_check_rule = False
