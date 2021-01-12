@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import os
+import sys
 import threading
 import time
 import websockets
@@ -215,5 +216,5 @@ def open_server(port, responsive, errors):
         gameserver = GameServer(port=port)
         gameserver.run()
     except Exception:
-        logging.error("game server encountered unexpected state")
+        logging.error("game server encountered unexpected state", exc_info=sys.exc_info())
         errors.append(time.perf_counter())
