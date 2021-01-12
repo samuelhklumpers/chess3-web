@@ -38,12 +38,17 @@ class PawnDoubleRule(Rule):
         if effect == self.cause:
             piece = game.get_board().get_tile(args[0]).get_piece()
             if piece.shape == "p":
+                x, y = args[0]
                 dx, dy = unpack2ddr(args)
 
                 d = -1 if piece.get_colour() == "w" else 1
 
-                if dx == 0 and dy == 2 * d and piece.moved == 0 and not game.get_board().get_tile(args[1]).get_piece():
-                    return [(self.consequence, args)]
+                mid = (x, y + d)
+
+                if dx == 0 and dy == 2 * d and piece.moved == 0:
+                    if not game.get_board().get_tile(mid).get_piece():
+                        if not game.get_board().get_tile(args[1]).get_piece():
+                            return [(self.consequence, args)]
 
 
 class PawnTakeRule(Rule):
@@ -79,13 +84,24 @@ class PawnEnPassantRule(Rule):  # warning: will generate duplicate moves when pa
             if piece.shape == "p":
                 dx, dy = unpack2ddr(args)
 
+                print(dx, dy)
+
                 d = -1 if piece.get_colour() == "w" else 1
+
+                print(piece.get_colour(), d)
 
                 if abs(dx) == 1 and dy == d:
                     x1, y1 = args[0]
                     x3, y3 = x1 + dx, y1
 
+                    print(x1, y1)
+                    print(x3, y3)
+
                     other = game.get_board().get_tile((x3, y3)).get_piece()
+                    print(other)
+                    print(other.shape)
+                    print(other.double)
+                    print(game.get_turn_num())
                     if other and other.shape == "p" and other.double == game.get_turn_num():
                         return [(self.consequence, args), ("take", (x3, y3))]
 

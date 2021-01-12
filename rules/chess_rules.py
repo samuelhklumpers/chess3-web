@@ -61,9 +61,6 @@ class MoveTurnRule(Rule):
         if effect == self.cause:
             piece = game.get_board().get_tile(args[0]).get_piece()
 
-            print(piece, args)
-            print(piece.get_colour(), game.get_turn())
-
             if piece:  # how does this become None?
                 if piece.get_colour() == game.get_turn():
                     return [(self.consequence, args)]

@@ -247,7 +247,7 @@ class CloseRoomRule(Rule):
 
 class TimeoutRule(Rule):
     def __init__(self, ruleset: Ruleset, timeout: int, watch: List[str]):
-        Rule.__init__(self, watch=watch)
+        Rule.__init__(self, watch=watch + ["init"])
 
         self.ruleset = ruleset
         self.timeout = timeout

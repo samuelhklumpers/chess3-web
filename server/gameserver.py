@@ -19,7 +19,7 @@ from structures.structures import *
 from rules.rules import *
 
 
-logging.basicConfig(filename="gameserver.log", level=logging.DEBUG)
+logging.basicConfig(filename="gameserver.log", level=logging.WARNING)
 
 
 def server_actions(move_start):

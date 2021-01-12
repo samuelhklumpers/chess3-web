@@ -204,4 +204,4 @@ def play_los(online=True, playback="", record=True):
 
 
 if __name__ == '__main__':
-    play_los(online=False, playback="", record=False)
+    play_chess(online=False, playback="", record=False)
