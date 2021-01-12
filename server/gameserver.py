@@ -206,6 +206,8 @@ def thread_loop(port):
 
 
 def open_server(port, responsive, errors):
+    asyncio.set_event_loop(asyncio.new_event_loop())
+
     async def set_responsive_task():
         while True:
             responsive.set()
