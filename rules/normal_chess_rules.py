@@ -99,8 +99,8 @@ class PawnEnPassantRule(Rule):  # warning: will generate duplicate moves when pa
 
                     other = game.get_board().get_tile((x3, y3)).get_piece()
                     print(other)
-                    print(other.shape)
-                    print(other.double)
+                    print(other and other.shape)
+                    print(other and other.double)
                     print(game.get_turn_num())
                     if other and other.shape == "p" and other.double == game.get_turn_num():
                         return [(self.consequence, args), ("take", (x3, y3))]
