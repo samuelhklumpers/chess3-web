@@ -175,6 +175,7 @@ class GameServer:
 
 def thread_loop(port):
     responsive = threading.Event()
+    responsive.set()
     error_times = []
 
     error_timeout = 10 * 60
