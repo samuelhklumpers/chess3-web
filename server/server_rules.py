@@ -1,11 +1,14 @@
 import asyncio
 import json
+import time
 
 import numpy as np
 
 from typing import List
 
-from structures.colours import HEXCOL
+import websockets
+
+from structures.colours import *
 from structures.chess_structures import *
 from structures.structures import *
 from rules.rules import *
@@ -94,9 +97,8 @@ class PromoteStartRule(Rule):
 
     def process(self, game: Chess, effect: str, args):
         if effect == "moved":
-            board = game.get_board()
-
             piece_id, start, end = args
+
             piece = game.get_by_id(piece_id)
             shape = piece.shape
             col = piece.get_colour()
@@ -104,11 +106,13 @@ class PromoteStartRule(Rule):
             if col not in game.get_player():
                 return
 
+            board = game.get_board()
             y = 0 if col == "w" else board.ny - 1
 
             if end[1] == y:
                 if shape in self.eligible:
-                    return [("lock_turn", ()), ("promoting", (end, col)), ("askstring", ("Promote to: " + str(self.promotions), col))]
+                    return [("lock_turn", ()), ("promoting", (end, col)),
+                            ("askstring", ("Promote to: " + str(self.promotions), col))]
 
 
 class LockRule(Rule):
@@ -148,8 +152,7 @@ class PromoteReadRule(Rule):
     def process(self, game: Chess, effect: str, args):
         if effect == "promoting":
             self.promoting = args
-
-        if effect == "readstring":
+        elif effect == "readstring":
             if self.promoting:
                 text, player = args
                 end, col = self.promoting
@@ -157,25 +160,20 @@ class PromoteReadRule(Rule):
                 if not player == col:
                     return [("askstring", ("Promote to: " + str(self.promotions), col))]
 
-                elist = []
-                elist += [("take", end), ("unlock_turn", ())]
                 if text in self.promotions:
-                    elist += [("create_piece", (end, col, text))]
+                    self.promoting = None
+                    return [("take", end), ("unlock_turn", ()), ("create_piece", (end, col, text))]
                 else:
                     return [("askstring", ("Promote to: " + str(self.promotions), col))]
 
-                self.promoting = None
-
-                return elist
-
 
 class WebSocketRule(Rule):
-    def __init__(self, game, player, ws):
+    def __init__(self, game: Chess, player: str, ws: websockets.WebSocketServerProtocol):
         Rule.__init__(self, ["send", "send_filter"])
 
         self.game = game
-        self.player = player
         self.ws = ws
+        self.player = player
 
     def process(self, game: Game, effect: str, args):
 
@@ -195,7 +193,6 @@ class WebSocketRule(Rule):
                 data = json.loads(msg)
 
                 eff, arg = data
-
                 if eff == "click":
                     self.game.process("touch", (arg, self.player))
                 elif eff == "write":
@@ -222,7 +219,7 @@ class WebTranslateRule(Rule):
         if effect == "draw_piece_at":
             return [("send", ("draw_piece", args))]
         elif effect == "draw_piece":
-            piece = game.board.get_tile(args).piece
+            piece = game.get_board().get_tile(args).piece
 
             if piece:
                 shape = piece.shape
@@ -237,8 +234,8 @@ class WebTranslateRule(Rule):
             return [("send_filter", ((effect, args[0]), args[1]))]
 
 
-class StopRule(Rule):
-    def __init__(self, server, room):
+class CloseRoomRule(Rule):
+    def __init__(self, server, room: str):
         Rule.__init__(self, ["stop"])
 
         self.server = server
@@ -249,10 +246,27 @@ class StopRule(Rule):
 
 
 class TimeoutRule(Rule):
-    def __init__(self):
-        ...  # raise stop if nothing happens for 10 minutes
+    def __init__(self, ruleset: Ruleset, timeout: int, watch: List[str]):
+        Rule.__init__(self, watch=watch)
 
+        self.ruleset = ruleset
+        self.timeout = timeout
+        self.last_event = time.perf_counter()
+
+    async def poll_timeout(self):
+        while True:
+            if time.perf_counter() - self.last_event > self.timeout:
+                self.ruleset.process("stop", ())
+                return
+
+            await asyncio.sleep(self.timeout)
+
+    def process(self, game: Chess, effect: str, args):
+        if effect == "init":
+            asyncio.run_coroutine_threadsafe(self.poll_timeout(), asyncio.get_event_loop())
+
+        self.timeout = time.perf_counter()
 
 
 __all__ = ["RedrawRule2", "MarkRule2", "MarkValidRule2", "StatusRule", "PromoteReadRule", "LockRule", "WinStopRule",
-           "PromoteStartRule", "WebSocketRule", "ConnectRedrawRule", "WebTranslateRule", "StopRule"]
+           "PromoteStartRule", "WebSocketRule", "ConnectRedrawRule", "WebTranslateRule", "CloseRoomRule", "TimeoutRule"]
