@@ -92,7 +92,7 @@
             }
         }
 
-        socket = new WebSocket("ws://" + window.location.hostname + ":19683");
+        socket = new WebSocket("ws://" + window.location.hostname + ":19684");
         socket.onmessage = function (event) {
             let msg = event.data;
             let data = JSON.parse(msg);

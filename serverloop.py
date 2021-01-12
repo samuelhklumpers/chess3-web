@@ -1,6 +1,12 @@
+import json
+
 from server.gameserver import thread_loop
 
-PORT = 3 ** 9 + 1
+
+with open("server_config.json") as f:
+    config = json.load(f)
+
+port = config["port"]
 
 if __name__ == "__main__":
-    thread_loop(PORT)
+    thread_loop(port)

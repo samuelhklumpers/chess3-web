@@ -4,7 +4,6 @@ import logging
 import os
 import threading
 import time
-import traceback
 import websockets
 
 from functools import partial
