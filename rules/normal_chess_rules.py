@@ -84,24 +84,12 @@ class PawnEnPassantRule(Rule):  # warning: will generate duplicate moves when pa
             if piece.shape == "p":
                 dx, dy = unpack2ddr(args)
 
-                print(dx, dy)
-
                 d = -1 if piece.get_colour() == "w" else 1
-
-                print(piece.get_colour(), d)
-
                 if abs(dx) == 1 and dy == d:
                     x1, y1 = args[0]
                     x3, y3 = x1 + dx, y1
 
-                    print(x1, y1)
-                    print(x3, y3)
-
                     other = game.get_board().get_tile((x3, y3)).get_piece()
-                    print(other)
-                    print(other and other.shape)
-                    print(other and other.double)
-                    print(game.get_turn_num())
                     if other and other.shape == "p" and other.double == game.get_turn_num():
                         return [(self.consequence, args), ("take", (x3, y3))]
 

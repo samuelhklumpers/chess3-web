@@ -23,7 +23,7 @@ logging.basicConfig(filename="gameserver.log", level=logging.WARNING)
 
 
 def server_actions(move_start):
-    return [TouchMoveRule(move_start), TakeRule(), MoveTakeRule(), SetPieceRule(), SetPlayerRule(), NextTurnRule(),
+    return [TouchMoveRule(move_start), TakeRule(), MoveTakeRule(), SetPieceRule(), SetPlayerRule(),
             WebTranslateRule(), ConnectRedrawRule(), StatusRule(), LockRule(), WinStopRule()]
 
 
@@ -54,6 +54,8 @@ def setup_chess(mode):
     normal_drawing = [DrawSetPieceRule(), DrawPieceCMAPRule(), RedrawRule2(), SelectRule(), SelectRule(),
                       MarkCMAPRule(), MarkRule2()]
 
+    late = [NextTurnRule()]
+
     ruleset.add_rule(TimeoutRule(ruleset, 10 * 60, watch=["touch", "readstring"]))
 
     if mode == "normal":
@@ -74,6 +76,7 @@ def setup_chess(mode):
         drawing = normal_drawing + [make_markvalid(game, piece_move, move_start)]
 
         ruleset.add_all(special + moves + post_move + actions + drawing)
+        ruleset.add_all(late, prio=-2)
 
         start = "wa8Th8Tb8Pg8Pc8Lf8Ld8De8Ka7pb7pc7pd7pe7pf7pg7ph7p;" \
                 "ba1Th1Tb1Pg1Pc1Lf1Ld1De1Ka2pb2pc2pd2pe2pf2pg2ph2p"
