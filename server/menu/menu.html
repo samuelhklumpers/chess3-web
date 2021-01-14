@@ -1,43 +1,26 @@
-
 <!DOCTYPE html>
 <html lang="en">
     <meta charset="UTF-8">
     <head>
+        <link rel="stylesheet" type="text/css" href="menustyle.css">
         <title>Chess Config Menu</title>
-        <style type="text/css">
-            body {
-                font-family: "Courier New", sans-serif;
-                text-align: center;
-            }
-            .buttons {
-                font-size: 2em;
-                display: flex;
-                justify-content: center;
-            }
-            .button {
-                line-height: 1;
-                padding: 2rem;
-                margin: 2rem;
-                border: medium solid;
-                min-height: 1em;
-                min-width: 1em;
-                cursor: pointer;
-                user-select: none;
-            }
-        </style>
     </head>
     <body>
-        <div class="buttons">
-            <div class="normalchess button">Normal</div>
-            <div class="fairychess button">Fairy</div>
-            <div class="lineofchess button">Line of Sight</div>
-        </div>
+        <h2>Enter match data:</h2>
         <form>
               <label for="roomform">Room:</label>
               <input type="text" id="roomform" name="roomform"><br>
               <label for="userform">User:</label>
               <input type="text" id="userform" name="userform"><br>
         </form>
+        <h2>Select variant:</h2>
+        <table>
+            <tr>
+                <td class="normalchess button">Normal</td>
+                <td class="fairychess button">Fairy</td>
+                <td class="lineofchess button">Line of Sight (defunct)</td>
+            </tr>
+        </table>
         <script>
             var normal = document.querySelector('.normalchess'),
                 fairy = document.querySelector('.fairychess'),
@@ -45,15 +28,15 @@
                 room = document.querySelector('#roomform'),
                 user = document.querySelector('#userform');
 
-            normal.onclick = function (event) {
+            normal.onclick = function (_) {
                 window.location.href = "/chess/game.html?room=" + room.value + "&mode=normal&user=" + user.value;
             };
 
-            fairy.onclick = function (event) {
+            fairy.onclick = function (_) {
                 window.location.href = "/chess/game.html?room=" + room.value + "&mode=fairy&user=" + user.value;
             };
 
-            line.onclick = function (event) {
+            line.onclick = function (_) {
                 window.location.href = "/chess/game.html?room=" + room.value + "&mode=line&user=" + user.value;
             };
         </script>

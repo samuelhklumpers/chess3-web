@@ -127,7 +127,6 @@ class DrawPieceCMAPRule(Rule):
     def __init__(self):
         Rule.__init__(self, watch=["draw_piece_at_cmap"])
 
-
     def process(self, game: Chess, effect, args):
         if effect == "draw_piece_at_cmap":
             pos, shape, col = args

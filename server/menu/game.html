@@ -2,40 +2,8 @@
 <html lang="en">
     <meta charset="UTF-8">
     <head>
+        <link rel="stylesheet" type="text/css" href="gamestyle.css">
         <title>Chess</title>
-        <style type="text/css">
-            body {
-                font-family: "Courier New", sans-serif;
-                text-align: center;
-            }
-
-            #field-container {
-                  height: 80vh; width: 80vh;
-                  margin: auto;
-                  position: relative;
-            }
-
-            #overlay {
-                pointer-events: none;
-            }
-
-            table {
-                position: absolute;
-                border: 1px solid black;
-                border-collapse: collapse;
-            }
-            tr {height: 10vh;}
-            td {width: 10vh; font-size: 20px; font-weight: bold}
-
-            .whitetile {
-                border: 1px solid black;
-                background-color: #eeb772;
-            }
-            .blacktile {
-                border: 1px solid black;
-                background-color: chocolate;
-            }
-        </style>
     </head>
     <body>
         <div id="field-container">
@@ -44,88 +12,7 @@
             <table id="overlay">
             </table>
         </div>
-        <div id="status"></div>
+        <div id="status">Undefined status</div>
     </body>
-    <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const room = urlParams.get('room');
-        const mode = urlParams.get('mode');
-        const user = urlParams.get('user');
-
-        displayfield = document.querySelector("#playfield");
-        overfield = document.querySelector("#overlay");
-        statusbox = document.querySelector("#status");
-        playfield = [];
-        overlay = [];
-
-        function process(effect, args) {
-            console.log(effect + " " + args.toString());
-
-            if (effect === "draw_piece")
-            {
-                pos = args[0];
-                shape = args[1];
-                colour = args[2];
-                j = pos[0];
-                i = pos[1];
-                cell = playfield[i][j];
-                cell.innerHTML = shape.fontcolor(colour);
-            }
-            else if (effect === "status")
-            {
-                statusbox.innerHTML = args;
-            }
-            else if (effect === "overlay")
-            {
-                pos = args[0];
-                text = args[1];
-                colour = args[2];
-                j = pos[0];
-                i = pos[1];
-                cell = overlay[i][j];
-                cell.innerHTML = text.fontcolor(colour);
-            }
-            else if (effect === "askstring")
-            {
-                resp = prompt(args);
-                socket.send(JSON.stringify(["write", resp]));
-            }
-        }
-
-        socket = new WebSocket("ws://" + window.location.hostname + ":19684");
-        socket.onmessage = function (event) {
-            let msg = event.data;
-            let data = JSON.parse(msg);
-            process(data[0], data[1]);
-        };
-        socket.onopen = function (event) {
-            socket.send(JSON.stringify({"room": room, "mode": mode, "user": user}));
-        };
-
-        for (let i = 0; i < 8; i++)
-        {
-            let row = displayfield.insertRow(i);
-            let orow = overfield.insertRow(i);
-            playfield.push([]);
-            overlay.push([]);
-            for (let j = 0; j < 8; j++)
-            {
-                let cell = row.insertCell(j);
-                let ocell = orow.insertCell(j);
-
-
-                if ((i + j) % 2 === 1)
-                    cell.className += " whitetile";
-                else
-                    cell.className += " blacktile";
-
-                cell.innerText = i.toString() + j.toString();
-
-                cell.onclick = function (event) {socket.send(JSON.stringify(["click", [j, i]]));};
-
-                overlay[i].push(ocell);
-                playfield[i].push(cell);
-            }
-        }
-    </script>
+    <script src="game.js"></script>
 </html>

@@ -24,7 +24,7 @@ logging.basicConfig(filename="gameserver.log", level=logging.WARNING)
 
 def server_actions(move_start):
     return [TouchMoveRule(move_start), TakeRule(), MoveTakeRule(), SetPieceRule(), SetPlayerRule(),
-            WebTranslateRule(), ConnectRedrawRule(), StatusRule(), LockRule(), WinStopRule()]
+            WebTranslateRule(), DrawReplaceRule(), ConnectRedrawRule(), StatusRule(), LockRule(), WinStopRule()]
 
 
 def make_markvalid(game, piece_move, move_start):

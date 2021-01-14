@@ -167,9 +167,26 @@ class PromoteReadRule(Rule):
                     return [("askstring", ("Promote to: " + str(self.promotions), col))]
 
 
+class SendFilterRule(Rule):
+    def __init__(self, filter_all: List[str]):
+        Rule.__init__(self, ["send", "set_filter"])
+
+        self.filter_all = filter_all
+        self.filter = filter_all
+
+    def process(self, game: Game, effect: str, args):
+        if effect == "send":
+            return [("send_filter", (args, self.filter))]
+        elif effect == "set_filter":
+            if args == "all":
+                self.filter = self.filter_all
+            else:
+                self.filter = args
+
+
 class WebSocketRule(Rule):
     def __init__(self, game: Chess, player: str, ws: websockets.WebSocketServerProtocol):
-        Rule.__init__(self, ["send", "send_filter"])
+        Rule.__init__(self, ["send_raw", "send_filter"])
 
         self.game = game
         self.ws = ws
@@ -177,7 +194,7 @@ class WebSocketRule(Rule):
 
     def process(self, game: Game, effect: str, args):
 
-        if effect == "send":
+        if effect == "send_raw":
             out = json.dumps(args)
         elif effect == "send_filter" and self.player in args[1]:
             out = json.dumps(args[0])
@@ -211,12 +228,27 @@ class ConnectRedrawRule(Rule):
             return [("redraw", ())]
 
 
+class DrawReplaceRule(Rule):
+    def __init__(self):
+        Rule.__init__(self, ["draw_piece_at"])
+
+        self.table = {"K": "\u2654", "D": "\u2655", "T": "\u2656", "L": "\u2657", "P": "\u2658", "p": "\u2659",
+                      "S": "\U0001fa11"}
+
+    def process(self, game: Game, effect: str, args):
+        if effect == "draw_piece_at":
+            pos, shape, col = args
+            shape = self.table.get(shape, shape)
+
+            return [("draw_piece_at2", (pos, shape, col))]
+
+
 class WebTranslateRule(Rule):
     def __init__(self):
         Rule.__init__(self, ["draw_piece_at", "draw_piece", "overlay", "status", "askstring"])
 
     def process(self, game: Chess, effect: str, args):
-        if effect == "draw_piece_at":
+        if effect == "draw_piece_at2":
             return [("send", ("draw_piece", args))]
         elif effect == "draw_piece":
             piece = game.get_board().get_tile(args).piece
@@ -269,4 +301,5 @@ class TimeoutRule(Rule):
 
 
 __all__ = ["RedrawRule2", "MarkRule2", "MarkValidRule2", "StatusRule", "PromoteReadRule", "LockRule", "WinStopRule",
-           "PromoteStartRule", "WebSocketRule", "ConnectRedrawRule", "WebTranslateRule", "CloseRoomRule", "TimeoutRule"]
+           "PromoteStartRule", "WebSocketRule", "ConnectRedrawRule", "WebTranslateRule", "CloseRoomRule", "TimeoutRule",
+           "SendFilterRule", "DrawReplaceRule"]
