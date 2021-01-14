@@ -245,11 +245,11 @@ class DrawReplaceRule(Rule):
 
 class WebTranslateRule(Rule):
     def __init__(self):
-        Rule.__init__(self, ["draw_piece_at", "draw_piece", "overlay", "status", "askstring"])
+        Rule.__init__(self, ["draw_piece_at2", "draw_piece", "overlay", "status", "askstring"])
 
     def process(self, game: Chess, effect: str, args):
         if effect == "draw_piece_at2":
-            return [("send", ("draw_piece", args))]
+            return [("send_raw", ("draw_piece", args))]
         elif effect == "draw_piece":
             piece = game.get_board().get_tile(args).piece
 
@@ -261,7 +261,7 @@ class WebTranslateRule(Rule):
 
             return [("draw_piece_at_cmap", (args, shape, col))]
         elif effect in ["overlay", "status"]:
-            return [("send", (effect, args))]
+            return [("send_raw", (effect, args))]
         elif effect == "askstring":
             return [("send_filter", ((effect, args[0]), args[1]))]
 
