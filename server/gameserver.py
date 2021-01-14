@@ -97,6 +97,7 @@ def setup_chess(mode):
         drawing = normal_drawing + [make_markvalid(game, piece_move, move_start)]
 
         ruleset.add_all(special + moves + post_move + actions + drawing)
+        ruleset.add_all(late, prio=-2)
 
         start = "wa8Sh8Sb8Jg8Jc8Cf8Cd8We8Ka7Fb7Fc7Fd7Fe7Ff7Fg7Fh7F;" \
                 "ba1Sh1Sb1Jg1Jc1Cf1Cd1We1Ka2Fb2Fc2Fd2Fe2Ff2Fg2Fh2F"
