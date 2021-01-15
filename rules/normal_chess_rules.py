@@ -209,6 +209,7 @@ class CastleRule(Rule):
     def process(self, game: Chess, effect: str, args):
         if effect == self.cause:
             piece = game.get_board().get_tile(args[0]).get_piece()
+            piece_id = game.get_id(piece)
             if piece.shape == "K":
                 if piece.moved > 0:
                     return
@@ -217,7 +218,7 @@ class CastleRule(Rule):
                 x2, y2 = args[1]
                 dx, dy = x2 - x1, y2 - y1
 
-                if abs(dx) == 2 and dy <= 0:
+                if abs(dx) == 2 and dy == 0:
                     if dx < 0:
                         other = (x1 - 4, y1)
                         end = (x1 - 1, y1)
@@ -227,9 +228,14 @@ class CastleRule(Rule):
                         end = (x1 + 1, y1)
                         rook = game.get_board().get_tile(other).get_piece()
 
-                    if rook and rook.moved == 0:
+                    print(rook)
+                    print(other)
+                    print(dx, dy)
+                    print(x2, y2)
+
+                    if rook and rook.shape == "T" and rook.moved == 0:
                         # minor hack because making two moves screws up parity
-                        return [("moved", ()), (self.consequence, args), (self.consequence, (other, end))]
+                        return [("moved", (piece_id, args[0], args[1])), (self.consequence, args), (self.consequence, (other, end))]
 
 
 class PawnPostDouble(Rule):

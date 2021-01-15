@@ -227,7 +227,10 @@ class Board:
         return self.get_tile(tile_i).get_piece()
 
     def get_tile(self, tile_i):
-        return self.tiles[tuple(tile_i)]
+        try:
+            return self.tiles[tuple(tile_i)]
+        except IndexError:
+            return None
 
 
 class TkBoard(tk.Canvas):

@@ -207,4 +207,4 @@ def play_los(online=True, playback="", record=True):
 
 
 if __name__ == '__main__':
-    play_chess(online=False, playback="", record=False)
+    play_fairy(online=False, playback="", record=False)

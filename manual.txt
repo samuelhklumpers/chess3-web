@@ -1,0 +1,82 @@
+================================================================
+**USER MANUALS**
+================================
+**Global**
+================
+Piece Notation:
+> A piece will be defined by writing its **F**ull Name if its letter occurs in it, otherwise by Full Name (**L**)
+
+========
+Move Notation:
+> A move will be defined using Parlett's movement notation, link: https://en.wikipedia.org/wiki/Fairy_chess_piece#Parlett's_movement_notation
+> For complex moves, this notation will be extended with:
+> - `0` move, stand still
+> - `l` left direction
+> - `r` right direction
+> - `s` safe, i.e. there exists no move for any opponent that captures this piece if this move would be played
+> - `:` labels the following move until the end of the line by `label:M`, surround with `(...)` to limit application, a label is referenced by `$label$`
+>   NOTE: A labeled move is not playable unless a reference of it appears in a playable context
+> - `@label@` labels a tile by the ending tile of the previous move by `label:M`, from the start of the line, a label is referenced by `%label%`
+>   NOTE: Unlike a move label, a tile label leaves the move valid
+> - `!` in bare context marks a move as invalid, but keeps labels, in `?` context if invalid
+> - `;` for multi-piece moves, used as `**P1**;...: M1; ...` 
+> - `?` if the preceding move or label is possible, not to be confused with `.` which means "after the preceding move"
+> - `{eq(n)}` any, `n` that satisfies `eq(n)`, `{a..b}` is equivalent to `{a <= n <= b}`
+>   NOTE: Binds `n`
+
+================================
+**Normal Chess**
+================
+Pieces: (Hahahahahahahahahahaha when will I swap the letters to their international equivalents)
+> **K**ing, Queen (**D**), Rook (**T**), Bishop (**L**), Knight (**P**), **p**awn
+
+========
+Win Condition:
+> If at the end of a turn, there are one or less players with one or more **K**, resp. that or no player wins.
+
+========
+Moves:
+> **K**:    1*
+> **D**:    n*
+> **T**:    n+
+> **L**:    nX
+> **P**:    ~1/2
+> **p**:    oi2>, o1>, c1X>
+
+> **K**;**T**:      is0.os1r.os1r; ~i2l,
+                    is0.os1l.os1l.os1l; ~i2r    (Castling)
+
+> **p**:    If piece at 1= played oi2> last turn then c1=.o1>
+========
+Other:
+> - Promotion:  If a **p** moves as far as would be possible on an empty board, it promotes
+>               it may promote to any of **D**, **T**, **L**, **P**
+> - Ties:       Not implemented
+> - Check(mate):Not implemented, ignoring check is valid, and the validity of capturing **K** makes checkmate redundant
+
+
+================================
+**Fairy Chess**
+================
+Pieces:
+> **K**ing, **W**heel, **S**hooter, Kirin **C**, **J**umper, **F**erz
+========
+Win Condition: identical to that of **Normal Chess**
+
+========
+Moves:
+> **K**:    1*
+> **W**:    {1..3}+, ~1/2
+> **S**:    0@S@.c{1..4}+.~%S%, o1*
+> **C**:    1X, ~2+
+> **J**:    ^2+
+> **F**:    1X
+
+========
+Other:
+> - Promotion:  If a **F** moves to the opposite side of the board, it promotes
+>               it may promote to any of **W**, **S**, **C**, **J**
+> - Ties:       identical to that of **Normal Chess**
+> - Check(mate):identical to that of **Normal Chess**
+
+
