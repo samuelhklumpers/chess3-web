@@ -117,7 +117,7 @@ class PromoteStartRule(Rule):
 
 class LockRule(Rule):
     def __init__(self):
-        Rule.__init__(self, ["lock_turn", "unlock_turn"])
+        Rule.__init__(self, ["lock_turn", "unlock_turn", "turn_changed"])
 
         self.turn = None
 
@@ -126,6 +126,9 @@ class LockRule(Rule):
             if not self.turn:
                 self.turn = game.get_turn()
                 game.turn = ""
+
+        if effect == "turn_changed":
+            self.turn = args
 
         if effect == "unlock_turn":
             if self.turn:

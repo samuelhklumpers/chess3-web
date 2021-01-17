@@ -203,7 +203,7 @@ class NextTurnRule(Rule):
 
             game.turn_num += 1
 
-            return [("turn_changed", ())]
+            return [("turn_changed", game.turn)]
 
 
 class MovedRule(Rule):
