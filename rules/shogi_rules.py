@@ -326,6 +326,9 @@ class ShogiTakeRule(Rule):
         moving = game.get_by_id(moving_id)
         taken = game.get_by_id(taken_id)
 
+        if not taken:
+            return
+
         shape = taken.shape
         shape = self.demotion.get(shape, shape)
 
