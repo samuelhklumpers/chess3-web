@@ -376,7 +376,7 @@ class ShogiTouchRule(Rule):
 
 class DropRule(Rule):
     def __init__(self):
-        Rule.__init__(self, watch=["drop"])
+        Rule.__init__(self, watch=["drop", "readstring"])
 
         self.dropping = False
 

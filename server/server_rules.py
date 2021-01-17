@@ -198,7 +198,6 @@ class WebSocketRule(Rule):
     def process(self, game: Game, effect: str, args):
 
         if effect == "send_raw":
-            print(args)
             out = json.dumps(args)
         elif effect == "send_filter" and self.player in args[1]:
             out = json.dumps(args[0])
