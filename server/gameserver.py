@@ -25,7 +25,7 @@ logging.basicConfig(filename="gameserver.log", level=logging.WARNING)
 
 
 def server_actions(move_start):
-    return [TouchMoveRule(move_start), TakeRule(), MoveTakeRule(), SetPieceRule(), SetPlayerRule(),
+    return [TakeRule(), MoveTakeRule(), SetPieceRule(), SetPlayerRule(),
             WebTranslateRule(), DrawReplaceRule(), ConnectRedrawRule(), StatusRule(), LockRule()]
 
 
@@ -75,7 +75,7 @@ def setup_chess(mode):
         post_move = [MovedRule(), PawnPostDouble(), PromoteStartRule(["p"], ["L", "P", "T", "D"]),
                      PromoteReadRule(["L", "P", "T", "D"]), WinRule()]
 
-        actions = server_actions(move_start)
+        actions = server_actions(move_start) + [TouchMoveRule(move_start)]
 
         drawing = normal_drawing + [make_markvalid(game, piece_move, move_start)]
 
@@ -96,7 +96,7 @@ def setup_chess(mode):
         post_move = [MovedRule(), PromoteStartRule(["F"], ["J", "C", "S", "W"]), PromoteReadRule(["J", "C", "S", "W"]),
                      WinRule()]
 
-        actions = server_actions(move_start)
+        actions = server_actions(move_start) + [TouchMoveRule(move_start)]
 
         drawing = normal_drawing + [make_markvalid(game, piece_move, move_start)]
 
@@ -122,7 +122,7 @@ def setup_chess(mode):
         move_start, moves, move_end = chain_rules(move_constrs, "move")
         moves += [SuccesfulMoveRule(move_end)]
 
-        actions = server_actions(move_start)
+        actions = server_actions(move_start) + [ShogiTouchRule(move_start)]
 
         drawing = normal_drawing + [make_markvalid(game, piece_move, move_start)]
 
