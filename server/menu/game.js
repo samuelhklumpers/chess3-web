@@ -47,13 +47,13 @@ socket.onopen = function (_) {
     socket.send(JSON.stringify({"room": room, "mode": mode, "user": user}));
 };
 
-for (let i = 0; i < 8; i++)
+for (let i = 0; i < 9; i++)
 {
     let row = displayfield.insertRow(i);
     let orow = overfield.insertRow(i);
     playfield.push([]);
     overlay.push([]);
-    for (let j = 0; j < 8; j++)
+    for (let j = 0; j < 9; j++)
     {
         let cell = row.insertCell(j);
         let ocell = orow.insertCell(j);

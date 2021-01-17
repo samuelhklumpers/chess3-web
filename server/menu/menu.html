@@ -18,12 +18,14 @@
             <tr>
                 <td class="normalchess button">Normal</td>
                 <td class="fairychess button">Fairy</td>
+                <td class="shogi button">Shogi</td>
                 <td class="lineofchess button">Line of Sight (defunct)</td>
             </tr>
         </table>
         <script>
             var normal = document.querySelector('.normalchess'),
                 fairy = document.querySelector('.fairychess'),
+                shogi = document.querySelector('.shogi'),
                 line = document.querySelector('.lineofchess'),
                 room = document.querySelector('#roomform'),
                 user = document.querySelector('#userform');
@@ -34,6 +36,10 @@
 
             fairy.onclick = function (_) {
                 window.location.href = "/chess/game.html?room=" + room.value + "&mode=fairy&user=" + user.value;
+            };
+
+            shogi.onclick = function (_) {
+                window.location.href = "/chess/game.html?room=" + room.value + "&mode=shogi&user=" + user.value;
             };
 
             line.onclick = function (_) {

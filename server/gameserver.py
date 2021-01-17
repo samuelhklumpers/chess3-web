@@ -13,6 +13,8 @@ from server.server_rules import *
 from rules.chess_rules import *
 from rules.normal_chess_rules import *
 from rules.fairy_rules import *
+from rules.shogi_rules import *
+from structures.shogi_structures import *
 from structures.chess_structures import *
 from rules.drawing_rules import *
 from structures.structures import *
@@ -24,7 +26,7 @@ logging.basicConfig(filename="gameserver.log", level=logging.WARNING)
 
 def server_actions(move_start):
     return [TouchMoveRule(move_start), TakeRule(), MoveTakeRule(), SetPieceRule(), SetPlayerRule(),
-            WebTranslateRule(), DrawReplaceRule(), ConnectRedrawRule(), StatusRule(), LockRule(), WinStopRule()]
+            WebTranslateRule(), DrawReplaceRule(), ConnectRedrawRule(), StatusRule(), LockRule()]
 
 
 def make_markvalid(game, piece_move, move_start):
@@ -49,6 +51,8 @@ def setup_chess(mode):
     game.set_board(board)
 
     ruleset = game.ruleset
+
+    ruleset.add_rule(WinStopRule(), -1)
 
     base_move = [[IdMoveRule], [MoveTurnRule], [MovePlayerRule], [FriendlyFireRule]]
     normal_drawing = [DrawSetPieceRule(), DrawPieceCMAPRule(), RedrawRule2(), SelectRule(), SelectRule(),
@@ -101,6 +105,34 @@ def setup_chess(mode):
 
         start = "wa8Sh8Sb8Jg8Jc8Cf8Cd8We8Ka7Fb7Fc7Fd7Fe7Ff7Fg7Fh7F;" \
                 "ba1Sh1Sb1Jg1Jc1Cf1Cd1We1Ka2Fb2Fc2Fd2Fe2Ff2Fg2Fh2F"
+    elif mode == "shogi":
+        board = ShogiBoard(game)
+        board.make_tiles(NormalTile)
+        game.set_board(board)
+
+        special = [CreatePieceRule({}), DropRule()]
+
+        piece_move = [[KingRule, SRookRule, DragonRule, SBishopRule, HorseRule, GoldRule,
+                       SilverRule, PromotedSilverRule, CassiaRule, PromotedCassiaRule, Lance,
+                       PromotedLanceRule, SoldierRule, PromotedSoldierRule]]
+
+        post_move = [ShogiPromoteStartRule(), ShogiPromoteReadRule(), WinRule()]
+
+        move_constrs = base_move + piece_move
+        move_start, moves, move_end = chain_rules(move_constrs, "move")
+        moves += [SuccesfulMoveRule(move_end)]
+
+        actions = server_actions(move_start)
+
+        drawing = normal_drawing + [make_markvalid(game, piece_move, move_start)]
+
+        ruleset.add_all(special + moves + post_move + actions + drawing)
+
+        late = [NextTurnRule(), WinCloseRule()]
+        ruleset.add_all(late, prio=-2)
+
+        start = "wa9Lb9Nc9Sd9Ge9Kf9Gg9Sh9Ni9L" + "b8Bh8R" + "a7Pb7Pc7Pd7Pe7Pf7Pg7Ph7Pi7P;" \
+                "ba1Lb1Nc1Sd1Ge1Kf1Gg1Sh1Ni1L" + "b2Rh2B" + "a3Pb3Pc3Pd3Pe3Pf3Pg3Ph3Pi3P"
     else:
         return
 
@@ -155,7 +187,7 @@ class GameServer:
             room_data = self.games[room]
 
             for ws in room_data["sockets"]:
-                ws.close()
+                await ws.close()
         finally:
             del self.games[room]
 

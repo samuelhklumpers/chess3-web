@@ -228,7 +228,7 @@ def play_shogi(online=True, playback="", record=True):
 
     ruleset.add_all(special + moves + post_move + actions + drawing)
 
-    late = [NextTurnRule()]
+    late = [NextTurnRule(), WinCloseRule()]
     ruleset.add_all(late, prio=-2)
 
     start = "wa9Lb9Nc9Sd9Ge9Kf9Gg9Sh9Ni9L" + "b8Bh8R" + "a7Pb7Pc7Pd7Pe7Pf7Pg7Ph7Pi7P;" \
