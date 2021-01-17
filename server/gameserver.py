@@ -187,7 +187,7 @@ class GameServer:
             room_data = self.games[room]
 
             for ws in room_data["sockets"]:
-                await ws.close()
+                asyncio.run_coroutine_threadsafe(ws.close(), asyncio.get_event_loop())
         finally:
             del self.games[room]
 
