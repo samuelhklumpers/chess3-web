@@ -112,15 +112,6 @@ class ShooterRule(Rule):
 
                 dx, dy = x2 - x1, y2 - y1
 
-                """if dx * dy == 0 and abs(dx + dy) < 5:
-                    can_fire = True
-                    for x, y in xyiter(x1, y1, x2, y2):
-                        if game.get_board().get_tile((x, y)).get_piece():
-                            can_fire = False
-
-                    if can_fire and game.get_board().get_tile((x2, y2)).get_piece():
-                        return [("take", (x2, y2)), (self.consequence, (args[0], args[0]))]"""
-
                 if max(abs(dx), abs(dy)) == 1:
                     if not game.get_board().get_tile((x2, y2)).get_piece():
                         if dx * dy == 0:

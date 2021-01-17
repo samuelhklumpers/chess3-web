@@ -8,8 +8,8 @@ def grouper(iterable, n, fillvalue=None):
 
 
 def xyiter(x1, y1, x2, y2, incl_start=False, incl_end=False):
-    sx = np.sign(x2 - x1)
-    sy = np.sign(y2 - y1)
+    sx = int(np.sign(x2 - x1))
+    sy = int(np.sign(y2 - y1))
 
     if incl_start:
         yield x1, y1
