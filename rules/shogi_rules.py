@@ -382,7 +382,7 @@ class DropRule(Rule):
             tile, player = args
 
             hand = game.get_board().get_hand(player)
-            
+
             if hand:
                 unique = list(set(hand))
                 self.dropping = (tile, player)
