@@ -338,7 +338,7 @@ class CaptureRule(Rule):
 
     def process(self, game: Chess, effect: str, args):
         colour, shape = args
-        game.get_board().get_hand(colour).add(shape)
+        game.get_board().get_hand(colour).append(shape)
 
 
 class ShogiTouchRule(Rule):
@@ -382,7 +382,7 @@ class DropRule(Rule):
             tile, player = args
 
             hand = game.get_board().get_hand(player)
-
+            
             if hand:
                 unique = list(set(hand))
                 self.dropping = (tile, player)

@@ -116,7 +116,7 @@ def setup_chess(mode):
                        SilverRule, PromotedSilverRule, CassiaRule, PromotedCassiaRule, Lance,
                        PromotedLanceRule, SoldierRule, PromotedSoldierRule]]
 
-        post_move = [ShogiPromoteStartRule(), ShogiPromoteReadRule(), WinRule()]
+        post_move = [ShogiPromoteStartRule(), ShogiPromoteReadRule(), CaptureRule(), WinRule()]
 
         move_constrs = base_move + piece_move
         move_start, moves, move_end = chain_rules(move_constrs, "move")
