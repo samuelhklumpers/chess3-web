@@ -6,14 +6,15 @@ from rules.line_of_sight_rules import *
 from rules.chess_rules import *
 from rules.normal_chess_rules import *
 from rules.fairy_rules import *
+from rules.shogi_rules import *
 from structures.chess_structures import *
 from rules.drawing_rules import *
-from util.online import *
+from utility.online import *
 from structures.structures import *
 from rules.network_rules import *
 
-
-DRAWING_RULES: List[Rule] = [DrawInitRule(), RedrawRule(), MarkRule(), SelectRule(), MarkCMAPRule(), DrawPieceRule(), DrawPieceCMAPRule()]
+DRAWING_RULES: List[Rule] = [DrawInitRule(), RedrawRule(), MarkRule(), SelectRule(), MarkCMAPRule(), DrawPieceRule(),
+                             DrawPieceCMAPRule()]
 MOVE_RULES: List[List[Type[Rule]]] = [[IdMoveRule], [MoveTurnRule], [MovePlayerRule], [FriendlyFireRule]]
 NETWORK_RULES: List[Rule] = [ReceiveRule("net0"), ColourRollRule("net0", "net1"), CloseSocket()]
 
@@ -33,7 +34,8 @@ def make_online(chess: Chess, whitelist: List[Rule]):
     chess.ruleset.add_all(rules)
 
 
-def setup_chess(config: dict, start_positions: str, special: List[Rule], piece_moves: List[List[Type[Rule]]], post_move: List[Rule], additional: List[Rule]):
+def setup_chess(config: dict, start_positions: str, special: List[Rule], piece_moves: List[List[Type[Rule]]],
+                post_move: List[Rule], additional: List[Rule]):
     chess = Chess()  # make a blank board game instance
 
     board = Board(chess)
@@ -52,7 +54,8 @@ def setup_chess(config: dict, start_positions: str, special: List[Rule], piece_m
 
     move0, move_rules, move1 = chain_rules(moves, "move")  # create conditional move chain
     has_check_rule = False
-    if config.get("check", None) is not None:  # warning dangerous experimental option, leaves the game in tie on checkmate, turns will take >1s to calculate
+    if config.get("check",
+                  None) is not None:  # warning dangerous experimental option, leaves the game in tie on checkmate, turns will take >1s to calculate
         win_cond = config["check"]
 
         lazy_set = Ruleset(chess)
@@ -125,11 +128,11 @@ def setup_chess(config: dict, start_positions: str, special: List[Rule], piece_m
 def play_chess(online=True, playback="", record=True):
     special = [CreatePieceRule({"K": MovedPiece, "p": Pawn, "T": MovedPiece})]
 
-    move_rules= [[PawnSingleRule, PawnDoubleRule, PawnTakeRule, PawnEnPassantRule, KnightRule,
-                  BishopRule, RookRule, QueenRule, KingRule, CastleRule]]  # add all normal chess moves
+    move_rules = [[PawnSingleRule, PawnDoubleRule, PawnTakeRule, PawnEnPassantRule, KnightRule,
+                   BishopRule, RookRule, QueenRule, KingRule, CastleRule]]  # add all normal chess moves
 
     post_move = [DrawSetPieceRule(), MovedRule(), PawnPostDouble(),
-                 PromoteRule(["p"], ["L", "P", "T", "D"]), # special rules for pawn, rook and king
+                 PromoteRule(["p"], ["L", "P", "T", "D"]),  # special rules for pawn, rook and king
                  WinRule(), WinCloseRule()]
 
     additional = [CounterRule()]  # piece counter addon
@@ -143,28 +146,6 @@ def play_chess(online=True, playback="", record=True):
     tkchess.mainloop()  # start the game
 
 
-def test():
-    special = [CreatePieceRule({"K": MovedPiece, "p": Pawn, "T": MovedPiece})]
-
-    move_rules= [[PawnSingleRule, PawnDoubleRule, PawnTakeRule, PawnEnPassantRule, KnightRule,
-                  BishopRule, RookRule, QueenRule, KingRule, CastleRule]]  # add all normal chess moves
-
-    post_move = [DrawSetPieceRule(), MovedRule(), PawnPostDouble(),
-                 PromoteRule(["p"], ["L", "P", "T", "D"]), # special rules for pawn, rook and king
-                 WinRule(), WinCloseRule()]
-
-    additional = [CounterRule()]  # piece counter addon
-
-    start = "wa8Th8Tb8Pg8Pc8Lf8Ld8De8Ka7pb7pc7pd7pe7pf7pg7ph7p;" \
-            "ba1Th1Tb1Pg1Pc1Lf1Ld1De1Ka2pb2pc2pd2pe2pf2pg2ph2p"
-
-    cfg = {"show_valid": []}
-
-    chess, tkchess = setup_chess(cfg, start, special, move_rules, post_move, additional)
-
-    return chess
-
-
 def play_fairy(online=True, playback="", record=True):
     special = [CreatePieceRule({})]
 
@@ -176,7 +157,7 @@ def play_fairy(online=True, playback="", record=True):
 
     additional = [CounterRule()]  # piece counter addon
 
-    start = "wa8Sh8Sb8Jg8Jc8Cf8Cd8We8Ka7Fb7Fc7Fd7Fe7Ff7Fg7Fh7F;"\
+    start = "wa8Sh8Sb8Jg8Jc8Cf8Cd8We8Ka7Fb7Fc7Fd7Fe7Ff7Fg7Fh7F;" \
             "ba1Sh1Sb1Jg1Jc1Cf1Cd1We1Ka2Fb2Fc2Fd2Fe2Ff2Fg2Fh2F"
 
     cfg = {"online": online, "playback": playback, "record": record, "show_valid": []}
@@ -197,7 +178,7 @@ def play_los(online=True, playback="", record=True):
 
     additional = [CounterRule()]  # piece counter addon
 
-    start = "wa8Sh8Sb8Jg8Jc8Cf8Cd8We8Ka7Fb7Fc7Fd7Fe7Ff7Fg7Fh7F;"\
+    start = "wa8Sh8Sb8Jg8Jc8Cf8Cd8We8Ka7Fb7Fc7Fd7Fe7Ff7Fg7Fh7F;" \
             "ba1Sh1Sb1Jg1Jc1Cf1Cd1We1Ka2Fb2Fc2Fd2Fe2Ff2Fg2Fh2F"
 
     cfg = {"online": online, "playback": playback, "record": record, "show_valid": show_valid}
@@ -206,5 +187,59 @@ def play_los(online=True, playback="", record=True):
     tkchess.mainloop()  # start the game
 
 
+def play_shogi(online=True, playback="", record=True):
+    chess = Chess()
+    board = Board(chess, 9, 9)
+    board.make_tiles(NormalTile)
+    chess.set_board(board)
+    tkchess = TkChess(chess)
+
+    ruleset = chess.ruleset
+
+    special = [CreatePieceRule({})]
+
+    move_rules = [[KingRule, SRookRule, DragonRule, SBishopRule, HorseRule, GoldRule,
+                   SilverRule, PromotedSilverRule, CassiaRule, PromotedCassiaRule, Lance,
+                   PromotedLanceRule, SoldierRule, PromotedSoldierRule]]
+
+    post_move = [ShogiPromoteStartRule(), ShogiPromoteReadRule(),
+                 WinRule(), WinCloseRule()]
+
+    move_constrs = MOVE_RULES + move_rules
+    move_start, moves, move_end = chain_rules(move_constrs, "move")
+    moves += [SuccesfulMoveRule(move_end)]
+
+    actions = make_actions(move_start)
+
+    #
+    pure_types = [[IdMoveRule], [FriendlyFireRule]] + move_rules  # pure moves (i.e. no side effects)
+    pure0, pure, pure1 = chain_rules(pure_types, "move")
+
+    subruleset = Ruleset(chess)  # create new logic system
+    subruleset.debug = False  # beware, setting to True will often generate an unreadable amount of output
+
+    subruleset.add_all(pure)
+    subruleset.add_rule(SuccesfulMoveRule(pure1))
+
+    ruleset.add_rule(MarkValidRule(subruleset, pure0))  # add marker
+    #
+
+    drawing = DRAWING_RULES + [DrawInitRule(), DrawSetPieceRule()]
+
+    ruleset.add_all(special + moves + post_move + actions + drawing)
+
+    late = [NextTurnRule()]
+    ruleset.add_all(late, prio=-2)
+
+    start = "wa9Lb9Nc9Sd9Ge9Kf9Gg9Sh9Ni9L" + "b8Bh8R" + "a7Pb7Pc7Pd7Pe7Pf7Pg7Ph7Pi7P;" \
+            "ba1Lb1Nc1Sd1Ge1Kf1Gg1Sh1Ni1L" + "b2Rh2B" + "a3Pb3Pc3Pd3Pe3Pf3Pg3Ph3Pi3P"
+
+    chess.load_board_str(start)
+    chess.process("init", ())
+
+    tkchess.geometry("600x600")
+    tkchess.mainloop()
+
+
 if __name__ == '__main__':
-    play_fairy(online=False, playback="", record=False)
+    play_shogi(online=False, playback="", record=False)

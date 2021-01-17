@@ -8,7 +8,7 @@ import itertools as itr
 from typing import Optional, Callable
 
 from structures.structures import *
-from util.util import *
+from utility.util import *
 from structures.colours import *
 
 
@@ -197,11 +197,11 @@ class TkChess(tk.Tk):
 
 
 class Board:
-    def __init__(self, game: Chess):
+    def __init__(self, game: Chess, nx=8, ny=8):
         self.game = game
         self.tkboard: Optional[TkBoard] = None
 
-        self.nx, self.ny = 8, 8
+        self.nx, self.ny = nx, ny
 
         self.tiles = np.empty((self.nx, self.ny), dtype=object)
 

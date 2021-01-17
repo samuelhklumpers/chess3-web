@@ -5,7 +5,7 @@ from structures.lazy_structures import RefChess
 from rules.rules import *
 from structures.chess_structures import *
 from structures.structures import Ruleset
-from util.util import *
+from utility.util import *
 
 
 class PawnSingleRule(Rule):

@@ -2,7 +2,7 @@ import numpy as np
 
 from rules.rules import *
 from structures.chess_structures import *
-from util.util import *
+from utility.util import *
 
 
 class FerzRule(Rule):
