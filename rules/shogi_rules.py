@@ -248,7 +248,7 @@ class ShogiPromoteStartRule(Rule):
     def __init__(self):
         Rule.__init__(self, watch=["moved"])
 
-        self.promotion = {"R": "+R", "B": "+B", "S": "+S", "N": "+N", "L": "+L", "P": "+P"}
+        self.promotion = {"R": "D", "B": "H", "S": "+S", "N": "+N", "L": "+L", "P": "+P"}
 
     def process(self, game: Chess, effect: str, args):
         if effect == "moved":
@@ -288,7 +288,7 @@ class ShogiPromoteReadRule(Rule):
     def __init__(self):
         Rule.__init__(self, watch=["promote", "promoting", "readstring"])
 
-        self.promotion = {"R": "+R", "B": "+B", "S": "+S", "N": "+N", "L": "+L", "P": "+P"}
+        self.promotion = {"R": "D", "B": "H", "S": "+S", "N": "+N", "L": "+L", "P": "+P"}
         self.promoting = None
 
     def process(self, game: Chess, effect: str, args):
@@ -318,7 +318,7 @@ class ShogiTakeRule(Rule):
     def __init__(self):
         Rule.__init__(self, watch=["takes"])
 
-        self.promotion = {"R": "+R", "B": "+B", "S": "+S", "N": "+N", "L": "+L", "P": "+P"}
+        self.promotion = {"R": "D", "B": "H", "S": "+S", "N": "+N", "L": "+L", "P": "+P"}
         self.demotion = {v: k for (k, v) in self.promotion.items()}
 
     def process(self, game: Chess, effect: str, args):
