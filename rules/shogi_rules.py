@@ -396,14 +396,11 @@ class DropRule(Rule):
                 drop, player1 = args
                 tile, player2 = self.dropping
 
-                print(drop, player1, tile, player2)
-
                 if not player1 == player2:
                     return
 
                 hand = game.get_board().get_hand(player1)
                 self.dropping = False
-                print(hand)
 
                 if drop in hand:
-                    return [("create_piece", tile, player1, drop)]
+                    return [("create_piece", (tile, player1, drop))]
