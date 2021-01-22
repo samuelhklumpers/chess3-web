@@ -56,7 +56,28 @@ socket.onopen = function (_) {
     socket.send(JSON.stringify({"room": room, "mode": mode, "user": user}));
 };
 
+
 function createBoard(n, m) {
+    let stylelink = document.querySelector("#stylesheet");
+    let sheet = stylelink.sheet;
+    let rules = sheet.rules;
+
+    let width = 80 / m;
+    let height = 80 / n;
+    let size = Math.floor(Math.min(width, height));
+
+    for (let rule in rules)
+    {
+        if (rule.selectorText === ".tr")
+        {
+            rule.height = size.toString() + "vh";
+        }
+        else if (rule.selectorText === ".td")
+        {
+            rule.width = size.toString() + "vh";
+        }
+    }
+
     for (let i = 0; i < n; i++) {
         let row = displayfield.insertRow(i);
         let orow = overfield.insertRow(i);
