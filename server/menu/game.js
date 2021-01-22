@@ -9,6 +9,32 @@ statusbox = document.querySelector("#status");
 playfield = [];
 overlay = [];
 
+let width = 80;
+let height = 80;
+let dr = 80;
+
+
+function toHTML(html) {
+  let temp = document.createElement('template');
+  html = html.trim();
+  temp.innerHTML = html;
+  return temp.content.firstChild;
+}
+
+
+function draw_svg(ix, raw, col) {
+    let [i, j] = ix;
+    let cell = playfield[i][j];
+    let im = toHTML(raw);
+
+    im.setAttribute("class", "square");
+    im.setAttribute("fill", col);
+
+    cell.innerHTML = "";
+    cell.appendChild(im);
+}
+
+
 function process(effect, args) {
     console.log(effect + " " + args.toString());
 
@@ -16,15 +42,23 @@ function process(effect, args) {
     {
         let [pos, shape, colour] = args;
         let [j, i] = pos;
+
         cell = playfield[i][j];
-        cell.innerHTML = shape.fontcolor(colour);
+        cell.innerHTML = "";
+
+        if (shape.endsWith(".svg")) {
+            fetch("/images/" + shape).then(response => response.text()).then(raw => draw_svg([i, j], raw, colour));
+        }
+        else {
+            cell.innerHTML = shape.fontcolor(colour);
+        }
     }
     else if (effect === "config")
     {
         let [key, value] = args;
-        let [m, n] = value;
 
         if (key === "board_size") {
+            let [m, n] = value;
             createBoard(n, m);
         }
     }
@@ -62,9 +96,9 @@ function createBoard(n, m) {
     let sheet = stylelink.sheet;
     let rules = sheet.rules;
 
-    let width = 80 / m;
-    let height = 80 / n;
-    let dr = Math.floor(Math.min(width, height));
+    width = 80 / m;
+    height = 80 / n;
+    dr = Math.floor(Math.min(width, height));
 
     for (let i = 0; i < rules.length; ++i)
     {

@@ -26,6 +26,8 @@ table {
 tr {height: 10vh;}
 td {width: 10vh; font-size: 40px; font-weight: bold}
 
+.square {height: 6vh; width: 6vh}
+
 .whitetile {
     border: 1px solid black;
     background-color: #eeb772;
