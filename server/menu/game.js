@@ -19,6 +19,15 @@ function process(effect, args) {
         cell = playfield[i][j];
         cell.innerHTML = shape.fontcolor(colour);
     }
+    else if (effect === "config")
+    {
+        let [key, value] = args;
+        let [m, n] = value;
+
+        if (key === "board_size") {
+            createBoard(n, m);
+        }
+    }
     else if (effect === "status")
     {
         statusbox.innerHTML = args;
@@ -47,28 +56,30 @@ socket.onopen = function (_) {
     socket.send(JSON.stringify({"room": room, "mode": mode, "user": user}));
 };
 
-for (let i = 0; i < 9; i++)
-{
-    let row = displayfield.insertRow(i);
-    let orow = overfield.insertRow(i);
-    playfield.push([]);
-    overlay.push([]);
-    for (let j = 0; j < 9; j++)
-    {
-        let cell = row.insertCell(j);
-        let ocell = orow.insertCell(j);
+function createBoard(n, m) {
+    for (let i = 0; i < n; i++) {
+        let row = displayfield.insertRow(i);
+        let orow = overfield.insertRow(i);
+        playfield.push([]);
+        overlay.push([]);
+        for (let j = 0; j < m; j++) {
+            let cell = row.insertCell(j);
+            let ocell = orow.insertCell(j);
 
 
-        if ((i + j) % 2 === 1)
-            cell.className += " whitetile";
-        else
-            cell.className += " blacktile";
+            if ((i + j) % 2 === 1)
+                cell.className += " whitetile";
+            else
+                cell.className += " blacktile";
 
-        cell.innerText = i.toString() + j.toString();
+            cell.innerText = i.toString() + j.toString();
 
-        cell.onclick = function (_) {socket.send(JSON.stringify(["click", [j, i]]));};
+            cell.onclick = function (_) {
+                socket.send(JSON.stringify(["click", [j, i]]));
+            };
 
-        overlay[i].push(ocell);
-        playfield[i].push(cell);
+            overlay[i].push(ocell);
+            playfield[i].push(cell);
+        }
     }
 }

@@ -87,7 +87,8 @@ class Ruleset:
 
             res = rule.process(self.game, effect, args)
 
-            if res:
+            if res is not None:
+                res = list(res)
                 consequences += res
 
         self.process_all(consequences)

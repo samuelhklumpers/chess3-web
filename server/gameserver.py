@@ -74,6 +74,8 @@ def setup_chess(mode):
         actions = server_actions()
         actions.append(TouchMoveRule(move_start))
 
+        ruleset.add_all(ConnectSetupRule({"board_size": (8, 8)}), 0)
+
         draw_table = {"K": "\u2654", "D": "\u2655", "T": "\u2656", "L": "\u2657", "P": "\u2658", "p": "\u2659"}
 
         start = "wa8Th8Tb8Pg8Pc8Lf8Ld8De8Ka7pb7pc7pd7pe7pf7pg7ph7p;" \
@@ -95,6 +97,8 @@ def setup_chess(mode):
 
         actions = server_actions()
         actions.append(TouchMoveRule(move_start))
+
+        ruleset.add_all(ConnectSetupRule({"board_size": (8, 8)}), 0)
 
         draw_table = {}
 
@@ -119,6 +123,8 @@ def setup_chess(mode):
 
         actions = server_actions()
         actions.append(ShogiTouchRule(move_start))
+
+        ruleset.add_all(ConnectSetupRule({"board_size": (9, 9)}), 0)
 
         draw_table = {}
 

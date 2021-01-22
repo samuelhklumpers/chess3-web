@@ -222,6 +222,20 @@ class WebSocketRule(Rule):
             self.game.process("disconnect", self.player)
 
 
+class ConnectSetupRule(Rule):
+    def __init__(self, cfg):
+        Rule.__init__(self, ["connect"])
+
+        self.config = cfg
+
+    def process(self, game: Chess, effect: str, args):
+        if effect == "connect":
+            yield [("set_filter", args)]
+            for key, value in self.config.items():
+                yield [("send", ("config", (key, value)))]
+            yield [("set_filter", "all")]
+
+
 class ConnectRedrawRule(Rule):
     def __init__(self):
         Rule.__init__(self, ["connect"])
@@ -304,4 +318,4 @@ class TimeoutRule(Rule):
 
 __all__ = ["RedrawRule2", "MarkRule2", "MarkValidRule2", "StatusRule", "PromoteReadRule", "LockRule", "WinStopRule",
            "PromoteStartRule", "WebSocketRule", "ConnectRedrawRule", "WebTranslateRule", "CloseRoomRule", "TimeoutRule",
-           "SendFilterRule", "DrawReplaceRule"]
+           "SendFilterRule", "DrawReplaceRule", "ConnectSetupRule"]
