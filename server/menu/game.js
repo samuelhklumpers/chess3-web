@@ -66,8 +66,9 @@ function createBoard(n, m) {
     let height = 80 / n;
     let size = Math.floor(Math.min(width, height));
 
-    for (let rule in rules)
+    for (let i = 0; i < rules.length; ++i)
     {
+        let rule = rules[i];
         if (rule.selectorText === ".tr")
         {
             rule.height = size.toString() + "vh";
