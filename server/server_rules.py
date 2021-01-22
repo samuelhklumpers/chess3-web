@@ -230,10 +230,10 @@ class ConnectSetupRule(Rule):
 
     def process(self, game: Chess, effect: str, args):
         if effect == "connect":
-            yield [("set_filter", args)]
+            yield ("set_filter", args)
             for key, value in self.config.items():
-                yield [("send", ("config", (key, value)))]
-            yield [("set_filter", "all")]
+                yield ("send", ("config", (key, value)))
+            yield ("set_filter", "all")
 
 
 class ConnectRedrawRule(Rule):

@@ -5,6 +5,8 @@ import os
 import sys
 import threading
 import time
+import traceback
+
 import websockets
 
 from functools import partial
@@ -258,5 +260,6 @@ def open_server(port, responsive, errors):
         gameserver = GameServer(port=port)
         gameserver.run()
     except Exception:
+        traceback.print_exc()
         logging.error("game server encountered unexpected state", exc_info=sys.exc_info())
         errors.append(time.perf_counter())
