@@ -71,11 +71,11 @@ function createBoard(n, m) {
         let rule = rules[i];
         if (rule.selectorText === "tr")
         {
-            rule.height = dr.toString() + "vh";
+            rule.style.height = dr.toString() + "vh";
         }
         else if (rule.selectorText === "td")
         {
-            rule.width = dr.toString() + "vh";
+            rule.style.width = dr.toString() + "vh";
         }
     }
 
