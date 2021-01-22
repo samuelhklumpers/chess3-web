@@ -192,10 +192,13 @@ class MoveRedrawRule(Rule):
 
 class NextTurnRule(Rule):
     def __init__(self):
-        Rule.__init__(self, watch=["moved"])
+        Rule.__init__(self, watch=["moved", "do_turn"])
 
     def process(self, game: Chess, effect: str, args):
         if effect == "moved":
+            return [("do_turn", ())]
+
+        if effect == "do_turn":
             if game.turn == "w":
                 game.turn = "b"
             elif game.turn == "b":

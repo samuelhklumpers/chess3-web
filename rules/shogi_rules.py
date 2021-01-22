@@ -403,4 +403,4 @@ class DropRule(Rule):
                 self.dropping = False
 
                 if drop in hand:
-                    return [("create_piece", (tile, player1, drop))]
+                    return [("create_piece", (tile, player1, drop)), ("do_turn", ())]

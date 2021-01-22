@@ -232,10 +232,10 @@ class ConnectRedrawRule(Rule):
 
 
 class DrawReplaceRule(Rule):
-    def __init__(self):
+    def __init__(self, table):
         Rule.__init__(self, ["draw_piece_at"])
 
-        self.table = {"K": "\u2654", "D": "\u2655", "T": "\u2656", "L": "\u2657", "P": "\u2658", "p": "\u2659"}
+        self.table = table
 
     def process(self, game: Game, effect: str, args):
         if effect == "draw_piece_at":
