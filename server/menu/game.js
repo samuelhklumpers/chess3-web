@@ -47,7 +47,7 @@ function process(effect, args) {
         cell.innerHTML = "";
 
         if (shape.endsWith(".svg")) {
-            fetch("/images/" + shape).then(response => response.text()).then(raw => draw_svg([i, j], raw, colour));
+            fetch("/chess/images/" + shape).then(response => response.text()).then(raw => draw_svg([i, j], raw, colour));
         }
         else {
             cell.innerHTML = shape.fontcolor(colour);
