@@ -130,7 +130,9 @@ def setup_chess(mode):
 
         ruleset.add_rule(ConnectSetupRule({"board_size": (9, 9)}), 0)
 
-        draw_table = {}
+        draw_table = {"K": "king.svg", "L": "lance.svg", "N": "knight.svg", "S": "silver.svg", "G": "gold.svg",
+                      "B": "bishop.svg", "R": "rook.svg", "P": "pawn.svg", "D": "dragon.svg", "H": "horse.svg",
+                      "+P": "pawnplus.svg", "+S": "silverplus.svg", "+N": "knightplus.svg", "+L": "lanceplus.svg"}
 
         start = "wa9Lb9Nc9Sd9Ge9Kf9Gg9Sh9Ni9L" + "b8Bh8R" + "a7Pb7Pc7Pd7Pe7Pf7Pg7Ph7Pi7P;" \
                 "ba1Lb1Nc1Sd1Ge1Kf1Gg1Sh1Ni1L" + "b2Rh2B" + "a3Pb3Pc3Pd3Pe3Pf3Pg3Ph3Pi3P"
