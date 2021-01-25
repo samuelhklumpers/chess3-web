@@ -58,8 +58,7 @@ def setup_chess(mode):
     ruleset.add_rule(WinStopRule(), -1)
 
     base_move = [[IdMoveRule], [MoveTurnRule], [MovePlayerRule], [FriendlyFireRule]]
-    lazy_drawing = [DrawPieceCMAPRule(), RedrawRule2(), SelectRule(), SelectRule(),
-                      MarkCMAPRule(), MarkRule2()]
+    lazy_drawing = [DrawPieceCMAPRule(), RedrawRule2(), SelectRule(), SelectRule(), MarkCMAPRule(), MarkRule2()]
     normal_drawing = lazy_drawing + [DrawSetPieceRule()]
     late = [NextTurnRule(), WinCloseRule()]
 
@@ -179,7 +178,6 @@ def setup_chess(mode):
         drawing.append(ServerLoSRule(make_pure_moves(game, piece_move), move_start))
     else:
         return
-
 
     drawing.append(DrawReplaceRule(draw_table))
 

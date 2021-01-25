@@ -28,7 +28,7 @@ class Ruleset:
         self.watches = {"all": []}
         self.lock = threading.RLock()
 
-        self.debug = True
+        self.debug = False
 
     def add_rule(self, rule, prio=1):  # 0 first forbidden/debug, -1 last forbidden/debug
         self.rules.setdefault(prio, []).append(rule)
@@ -92,40 +92,6 @@ class Ruleset:
                 consequences += res
 
         self.process_all(consequences)
-
-        """
-        keys = list(self.rules.keys())
-
-        early = [k for k in keys if k >= 0]
-        late = [k for k in keys if k < 0]
-
-        early.sort()
-        late.sort()
-
-        
-
-        # make corecursive
-        for k in early:
-            consequences = []
-
-            for rule in self.rules[k]:
-                res = rule.process(self.game, effect, args)
-
-                if res:
-                    consequences += res
-
-            self.process_all(consequences)
-
-        for k in late:
-            consequences = []
-
-            for rule in self.rules[k]:
-                res = rule.process(self.game, effect, args)
-
-                if res:
-                    consequences += res
-
-            self.process_all(consequences)"""
 
 
 __all__ = ["Game", "TkGame", "Tile", "Ruleset"]

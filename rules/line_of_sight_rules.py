@@ -117,6 +117,10 @@ class ServerLoSRule(Rule):
                               ("overlay", (tile, "#", HEXCOL["fog"]))]
 
             elist += [("set_filter", "all")]
+            print(elist)
+            print(pieces)
+            print(visible)
+            print(invisible)
             return elist
 
 
