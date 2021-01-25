@@ -1,6 +1,7 @@
 import asyncio
 import json
 import time
+from collections import deque
 
 import numpy as np
 
@@ -12,6 +13,19 @@ from structures.colours import *
 from structures.chess_structures import *
 from structures.structures import *
 from rules.rules import *
+
+
+class TurnFilterRule(Rule):
+    def __init__(self, flow):
+        Rule.__init__(self, watch=list(flow))
+
+        self.flow = flow
+
+    def process(self, game: Chess, effect: str, args):
+        turn = game.get_turn()
+        cons = self.flow[effect]
+
+        return [("push_filter", turn), (cons, args), ("pop_filter", ())]
 
 
 class RedrawRule2(Rule):
@@ -176,6 +190,13 @@ class SendFilterRule(Rule):
 
         self.filter_all = filter_all
         self.filter = filter_all
+        self.stack = deque()
+
+    def transl(self, args):
+        if args == "all":
+            return self.filter_all
+        else:
+            return args
 
     def process(self, game: Game, effect: str, args):
         if effect == "send":
@@ -184,10 +205,13 @@ class SendFilterRule(Rule):
             else:
                 return [("send_filter", (args, self.filter))]
         elif effect == "set_filter":
-            if args == "all":
-                self.filter = self.filter_all
-            else:
-                self.filter = args
+            self.filter = self.transl(args)
+        elif effect == "push_filter":
+            new = self.transl(args)
+            self.stack.append(self.filter)
+            self.filter = new
+        elif effect == "pop_filter":
+            self.filter = self.stack.pop()
 
 
 class WebSocketRule(Rule):
@@ -245,7 +269,7 @@ class ConnectRedrawRule(Rule):
 
     def process(self, game: Game, effect: str, args):
         if effect == "connect":
-            return [("redraw", ())]
+            return [("set_filter", args), ("redraw", ()), ("set_filter", "all")]
 
 
 class DrawReplaceRule(Rule):
@@ -321,4 +345,4 @@ class TimeoutRule(Rule):
 
 __all__ = ["RedrawRule2", "MarkRule2", "MarkValidRule2", "StatusRule", "PromoteReadRule", "LockRule", "WinStopRule",
            "PromoteStartRule", "WebSocketRule", "ConnectRedrawRule", "WebTranslateRule", "CloseRoomRule", "TimeoutRule",
-           "SendFilterRule", "DrawReplaceRule", "ConnectSetupRule"]
+           "SendFilterRule", "DrawReplaceRule", "ConnectSetupRule", "TurnFilterRule"]

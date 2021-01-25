@@ -27,7 +27,7 @@ class TouchMoveRule(Rule):
 
                 m1, m2 = prev[0], args[0]
                 p = prev[1]
-                return [(self.consequence, (m1, m2, p)), ("select", prev)]
+                return [("select", prev), (self.consequence, (m1, m2, p))]
             elif piece:
                 self.prev = args
                 return [("select", args)]

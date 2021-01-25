@@ -55,13 +55,14 @@ class RedrawRule(Rule):
 
 
 class SelectRule(Rule):
-    def __init__(self):
-        Rule.__init__(self, watch=["select"])
+    def __init__(self, cause="select"):
+        Rule.__init__(self, watch=[cause])
 
         self.selected = None
+        self.cause = cause
 
     def process(self, game: Chess, effect, args):
-        if effect == "select":
+        if effect == self.cause:
             pos = args[0]
             ret = []
 
@@ -70,7 +71,7 @@ class SelectRule(Rule):
 
             if pos != self.selected:
                 self.selected = pos
-                ret += [("mark_cmap", (pos, HEXCOL["select"])), ("selected" , pos)]
+                ret += [("mark_cmap", (pos, HEXCOL["select"])), ("selected", pos)]
             else:
                 self.selected = None
 
