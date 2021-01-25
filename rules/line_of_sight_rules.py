@@ -112,13 +112,12 @@ class ServerLoSRule(Rule):
                 for tile in visible[player]:
                     elist += [("draw_piece", tile), ("overlay", (tile, "", HEXCOL["valid"]))]
 
-                for tile in visible[player]:
+                for tile in invisible[player]:
                     elist += [("draw_piece_at2", (tile, "", HEXCOL[player])),
                               ("overlay", (tile, "#", HEXCOL["fog"]))]
 
             elist += [("set_filter", "all")]
 
-            elist += [("overlay", ((2, 3), "X", HEXCOL["valid"]))]
 
             return elist
 

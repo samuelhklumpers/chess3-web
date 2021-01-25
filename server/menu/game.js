@@ -51,6 +51,13 @@ function process(effect, args) {
         }
         else {
             cell.innerHTML = shape.fontcolor(colour);
+
+            let children = cell.children;
+
+            if (children.length > 0)
+            {
+                cell.removeChild(children[0]);
+            }
         }
     }
     else if (effect === "config")
