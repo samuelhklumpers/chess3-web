@@ -103,7 +103,8 @@ def setup_chess(mode):
 
         ruleset.add_rule(ConnectSetupRule({"board_size": (8, 8)}), 0)
 
-        draw_table = {}
+        draw_table = {"K": "king.svg", "F": "ferz.svg", "S": "shooter.svg", "J": "jumper.svg", "C": "kirin.svg",
+                      "W": "wheel.svg"}
 
         start = "wa8Sh8Sb8Jg8Jc8Cf8Cd8We8Ka7Fb7Fc7Fd7Fe7Ff7Fg7Fh7F;" \
                 "ba1Sh1Sb1Jg1Jc1Cf1Cd1We1Ka2Fb2Fc2Fd2Fe2Ff2Fg2Fh2F"
