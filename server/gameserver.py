@@ -21,6 +21,7 @@ from structures.chess_structures import *
 from rules.drawing_rules import *
 from structures.structures import *
 from rules.rules import *
+from rules.line_of_sight_rules import *
 
 
 logging.basicConfig(filename="gameserver.log", level=logging.WARNING)
@@ -31,8 +32,7 @@ def server_actions():
             WebTranslateRule(), ConnectRedrawRule(), StatusRule(), LockRule(), SendFilterRule(["b", "w"])]
 
 
-def make_markvalid(game, piece_move, move_start):
-    # setup valid move marking
+def make_pure_moves(game, piece_move):
     pure_types = [[IdMoveRule], [FriendlyFireRule]] + piece_move  # pure moves (i.e. no side effects)
     pure0, pure, pure1 = chain_rules(pure_types, "move")
 
@@ -42,6 +42,11 @@ def make_markvalid(game, piece_move, move_start):
     subruleset.add_all(pure)
     subruleset.add_rule(SuccesfulMoveRule(pure1))
 
+    return subruleset
+
+
+def make_markvalid(game, piece_move, move_start):
+    subruleset = make_pure_moves(game, piece_move)
     return MarkValidRule2(subruleset, move_start)
 
 
@@ -53,8 +58,9 @@ def setup_chess(mode):
     ruleset.add_rule(WinStopRule(), -1)
 
     base_move = [[IdMoveRule], [MoveTurnRule], [MovePlayerRule], [FriendlyFireRule]]
-    normal_drawing = [DrawSetPieceRule(), DrawPieceCMAPRule(), RedrawRule2(), SelectRule(), SelectRule(),
+    lazy_drawing = [DrawPieceCMAPRule(), RedrawRule2(), SelectRule(), SelectRule(),
                       MarkCMAPRule(), MarkRule2()]
+    normal_drawing = lazy_drawing + [DrawSetPieceRule()]
     late = [NextTurnRule(), WinCloseRule()]
 
     if mode == "normal":
@@ -83,6 +89,9 @@ def setup_chess(mode):
 
         start = "wa8Th8Tb8Pg8Pc8Lf8Ld8De8Ka7pb7pc7pd7pe7pf7pg7ph7p;" \
                 "ba1Th1Tb1Pg1Pc1Lf1Ld1De1Ka2pb2pc2pd2pe2pf2pg2ph2p"
+        drawing = normal_drawing
+        drawing.append(make_markvalid(game, piece_move, move_start))
+        # can't have this in LoS because then 2nd order moves tell positions of unseen :p
     elif mode == "fairy":
         board = Board(game)
         board.make_tiles(NormalTile)
@@ -108,6 +117,8 @@ def setup_chess(mode):
 
         start = "wa8Sh8Sb8Jg8Jc8Cf8Cd8We8Ka7Fb7Fc7Fd7Fe7Ff7Fg7Fh7F;" \
                 "ba1Sh1Sb1Jg1Jc1Cf1Cd1We1Ka2Fb2Fc2Fd2Fe2Ff2Fg2Fh2F"
+        drawing = normal_drawing
+        drawing.append(make_markvalid(game, piece_move, move_start))
     elif mode == "shogi":
         board = ShogiBoard(game)
         board.make_tiles(NormalTile)
@@ -136,12 +147,41 @@ def setup_chess(mode):
 
         start = "wa9Lb9Nc9Sd9Ge9Kf9Gg9Sh9Ni9L" + "b8Bh8R" + "a7Pb7Pc7Pd7Pe7Pf7Pg7Ph7Pi7P;" \
                 "ba1Lb1Nc1Sd1Ge1Kf1Gg1Sh1Ni1L" + "b2Rh2B" + "a3Pb3Pc3Pd3Pe3Pf3Pg3Ph3Pi3P"
+        drawing = normal_drawing
+        drawing.append(make_markvalid(game, piece_move, move_start))
+    elif mode == "line":
+        board = Board(game)
+        board.make_tiles(NormalTile)
+        game.set_board(board)
+
+        special = [CreatePieceRule({"K": MovedPiece, "p": Pawn, "T": MovedPiece})]
+
+        piece_move = [[PawnSingleRule, PawnDoubleRule, PawnTakeRule, PawnEnPassantRule, KnightRule,
+                      BishopRule, RookRule, QueenRule, KingRule, CastleRule]]
+
+        move_start, moves, move_end = chain_rules(base_move + piece_move, "move")
+        moves.append(SuccesfulMoveRule(move_end))
+
+        post_move = [MovedRule(), PawnPostDouble(), PromoteStartRule(["p"], ["L", "P", "T", "D"]),
+                     PromoteReadRule(["L", "P", "T", "D"]), WinRule()]
+
+        actions = server_actions()
+        actions.append(TouchMoveRule(move_start))
+
+        ruleset.add_rule(ConnectSetupRule({"board_size": (8, 8)}), 0)
+
+        draw_table = {"K": "king.svg", "D": "queen.svg", "T": "rook.svg", "L": "bishop.svg", "P": "knight.svg",
+                      "p": "pawn.svg"}
+
+        start = "wa8Th8Tb8Pg8Pc8Lf8Ld8De8Ka7pb7pc7pd7pe7pf7pg7ph7p;" \
+                "ba1Th1Tb1Pg1Pc1Lf1Ld1De1Ka2pb2pc2pd2pe2pf2pg2ph2p"
+        drawing = lazy_drawing
+        drawing.append(ServerLoSRule(make_pure_moves(game, piece_move), move_start))
     else:
         return
 
-    drawing = normal_drawing
+
     drawing.append(DrawReplaceRule(draw_table))
-    drawing.append(make_markvalid(game, piece_move, move_start))
 
     ruleset.add_all(special + moves + post_move + actions + drawing)
     ruleset.add_all(late, prio=-2)

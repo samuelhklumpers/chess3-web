@@ -58,4 +58,66 @@ class LineOfSightRule(Rule):
             return elist
 
 
-__all__ = ['LineOfSightRule']
+def is_valid(indicate, move0, ruleset, start, end):
+    indicate.unset()
+    ruleset.process(move0, (start, end))
+    ret = indicate.is_set()
+    indicate.unset()
+    return ret
+
+
+class ServerLoSRule(Rule):
+    def __init__(self, subruleset: Ruleset, move0):
+        Rule.__init__(self, watch=["turn_changed"])
+
+        self.subruleset = subruleset
+        self.move0 = move0
+
+        self.success_indicator = IndicatorRule(["move_success"])
+        self.subruleset.add_rule(self.success_indicator)
+
+    def process(self, game: Chess, effect: str, args):
+        if effect == "turn_changed":
+            board = game.board
+            pieces = {}
+            visible = {}
+            invisible = {}
+            for tile_id in board.tile_ids():
+                piece = board.get_tile(tile_id).get_piece()
+
+                if piece:
+                    player = piece.get_colour()
+                    pieces.setdefault(player, []).append((tile_id, piece))
+                    visible.setdefault(player, set()).add(tile_id)
+
+            for tile_id in board.tile_ids():
+                for player in pieces:
+                    if tile_id in visible.get(player, ()) or tile_id in invisible.get(player, ()):
+                        continue
+
+                    valid = False
+                    for start, piece in pieces[player]:
+                        valid = is_valid(self.success_indicator, self.move0, self.subruleset, start, tile_id)
+                        if valid:
+                            visible.setdefault(player, set()).add(tile_id)
+                            break
+
+                    if not valid:
+                        invisible.setdefault(player, set()).add(tile_id)
+
+            elist = []
+            for player in visible:
+                elist += [("set_filter", player)]
+
+                for tile in visible[player]:
+                    elist += [("draw_piece", tile), ("overlay", (tile, "", HEXCOL["valid"]))]
+
+                for tile in visible[player]:
+                    elist += [("draw_piece_at2", (tile, "", HEXCOL[player])),
+                              ("overlay", (tile, "#", HEXCOL["fog"]))]
+
+            elist += [("set_filter", "all")]
+            return elist
+
+
+__all__ = ['LineOfSightRule', 'ServerLoSRule']

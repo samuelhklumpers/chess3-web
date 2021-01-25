@@ -54,7 +54,7 @@ def bishop(game: Chess, args):
 def knight(args):
     dx, dy = unpack2ddr(args)
 
-    if abs(dx * dy) == 2:
+    if abs(dx * dy) == 2 and abs(dy) == 2:
         return args
 
 
@@ -273,8 +273,8 @@ class ShogiPromoteStartRule(Rule):
                 can = y < 3
                 must = (shape in ["P", "L", "N"] and y == 0) or (shape == "N" and y == 1)
             else:
-                can = y > ymax - 3
-                must = (shape in ["P", "L", "N"] and y == ymax - 1) or (shape == "N" and y == ymax - 2)
+                can = y > ymax - 4
+                must = (shape in ["P", "L", "N"] and y == ymax - 2) or (shape == "N" and y == ymax - 3)
 
             if must:
                 return [("promote", (end, col, self.promotion[shape]))]
