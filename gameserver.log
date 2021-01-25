@@ -1,0 +1,95 @@
+ERROR:root:server thread became unresponsive, crashing
+ERROR:root:server thread became unresponsive, crashing
+ERROR:root:server thread became unresponsive, crashing
+ERROR:root:server thread became unresponsive, crashing
+ERROR:root:server thread became unresponsive, crashing
+ERROR:root:server thread became unresponsive, crashing
+ERROR:root:server thread became unresponsive, crashing
+ERROR:root:server thread became unresponsive, crashing
+ERROR:root:server thread became unresponsive, crashing
+ERROR:root:game server encountered unexpected state
+Traceback (most recent call last):
+  File "C:\Users\Samuel Klumpers\Desktop\Programming\Gui\Games\chess3\server\gameserver.py", line 303, in open_server
+    gameserver.run()
+  File "C:\Users\Samuel Klumpers\Desktop\Programming\Gui\Games\chess3\server\gameserver.py", line 201, in run
+    asyncio.get_event_loop().run_until_complete(start_server)
+  File "C:\Users\Samuel Klumpers\Desktop\Applications\Python\lib\asyncio\base_events.py", line 568, in run_until_complete
+    return future.result()
+  File "C:\Users\Samuel Klumpers\Desktop\Applications\Python\lib\asyncio\tasks.py", line 599, in _wrap_awaitable
+    return (yield from awaitable.__await__())
+  File "C:\Users\Samuel Klumpers\Desktop\Applications\Python\lib\site-packages\websockets\server.py", line 965, in __await_impl__
+    server = await self._create_server()
+  File "C:\Users\Samuel Klumpers\Desktop\Applications\Python\lib\asyncio\base_events.py", line 1361, in create_server
+    % (sa, err.strerror.lower())) from None
+OSError: [Errno 10048] error while attempting to bind on address ('0.0.0.0', 19684): only one usage of each socket address (protocol/network address/port) is normally permitted
+ERROR:asyncio:Task was destroyed but it is pending!
+task: <Task pending coro=<open_server.<locals>.set_responsive_task() done, defined at C:\Users\Samuel Klumpers\Desktop\Programming\Gui\Games\chess3\server\gameserver.py:295> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x00000230440F0228>()]> cb=[_chain_future.<locals>._call_set_state() at C:\Users\Samuel Klumpers\Desktop\Applications\Python\lib\asyncio\futures.py:355]>
+ERROR:root:game server encountered unexpected state
+Traceback (most recent call last):
+  File "C:\Users\Samuel Klumpers\Desktop\Programming\Gui\Games\chess3\server\gameserver.py", line 303, in open_server
+    gameserver.run()
+  File "C:\Users\Samuel Klumpers\Desktop\Programming\Gui\Games\chess3\server\gameserver.py", line 201, in run
+    asyncio.get_event_loop().run_until_complete(start_server)
+  File "C:\Users\Samuel Klumpers\Desktop\Applications\Python\lib\asyncio\base_events.py", line 568, in run_until_complete
+    return future.result()
+  File "C:\Users\Samuel Klumpers\Desktop\Applications\Python\lib\asyncio\tasks.py", line 599, in _wrap_awaitable
+    return (yield from awaitable.__await__())
+  File "C:\Users\Samuel Klumpers\Desktop\Applications\Python\lib\site-packages\websockets\server.py", line 965, in __await_impl__
+    server = await self._create_server()
+  File "C:\Users\Samuel Klumpers\Desktop\Applications\Python\lib\asyncio\base_events.py", line 1361, in create_server
+    % (sa, err.strerror.lower())) from None
+OSError: [Errno 10048] error while attempting to bind on address ('0.0.0.0', 19684): only one usage of each socket address (protocol/network address/port) is normally permitted
+ERROR:root:game server encountered unexpected state
+Traceback (most recent call last):
+  File "C:\Users\Samuel Klumpers\Desktop\Programming\Gui\Games\chess3\server\gameserver.py", line 303, in open_server
+    gameserver.run()
+  File "C:\Users\Samuel Klumpers\Desktop\Programming\Gui\Games\chess3\server\gameserver.py", line 201, in run
+    asyncio.get_event_loop().run_until_complete(start_server)
+  File "C:\Users\Samuel Klumpers\Desktop\Applications\Python\lib\asyncio\base_events.py", line 568, in run_until_complete
+    return future.result()
+  File "C:\Users\Samuel Klumpers\Desktop\Applications\Python\lib\asyncio\tasks.py", line 599, in _wrap_awaitable
+    return (yield from awaitable.__await__())
+  File "C:\Users\Samuel Klumpers\Desktop\Applications\Python\lib\site-packages\websockets\server.py", line 965, in __await_impl__
+    server = await self._create_server()
+  File "C:\Users\Samuel Klumpers\Desktop\Applications\Python\lib\asyncio\base_events.py", line 1361, in create_server
+    % (sa, err.strerror.lower())) from None
+OSError: [Errno 10048] error while attempting to bind on address ('0.0.0.0', 19684): only one usage of each socket address (protocol/network address/port) is normally permitted
+ERROR:root:game server encountered unexpected state
+Traceback (most recent call last):
+  File "C:\Users\Samuel Klumpers\Desktop\Programming\Gui\Games\chess3\server\gameserver.py", line 303, in open_server
+    gameserver.run()
+  File "C:\Users\Samuel Klumpers\Desktop\Programming\Gui\Games\chess3\server\gameserver.py", line 201, in run
+    asyncio.get_event_loop().run_until_complete(start_server)
+  File "C:\Users\Samuel Klumpers\Desktop\Applications\Python\lib\asyncio\base_events.py", line 568, in run_until_complete
+    return future.result()
+  File "C:\Users\Samuel Klumpers\Desktop\Applications\Python\lib\asyncio\tasks.py", line 599, in _wrap_awaitable
+    return (yield from awaitable.__await__())
+  File "C:\Users\Samuel Klumpers\Desktop\Applications\Python\lib\site-packages\websockets\server.py", line 965, in __await_impl__
+    server = await self._create_server()
+  File "C:\Users\Samuel Klumpers\Desktop\Applications\Python\lib\asyncio\base_events.py", line 1361, in create_server
+    % (sa, err.strerror.lower())) from None
+OSError: [Errno 10048] error while attempting to bind on address ('0.0.0.0', 19684): only one usage of each socket address (protocol/network address/port) is normally permitted
+ERROR:root:game server encountered unexpected state
+Traceback (most recent call last):
+  File "C:\Users\Samuel Klumpers\Desktop\Programming\Gui\Games\chess3\server\gameserver.py", line 303, in open_server
+    gameserver.run()
+  File "C:\Users\Samuel Klumpers\Desktop\Programming\Gui\Games\chess3\server\gameserver.py", line 201, in run
+    asyncio.get_event_loop().run_until_complete(start_server)
+  File "C:\Users\Samuel Klumpers\Desktop\Applications\Python\lib\asyncio\base_events.py", line 568, in run_until_complete
+    return future.result()
+  File "C:\Users\Samuel Klumpers\Desktop\Applications\Python\lib\asyncio\tasks.py", line 599, in _wrap_awaitable
+    return (yield from awaitable.__await__())
+  File "C:\Users\Samuel Klumpers\Desktop\Applications\Python\lib\site-packages\websockets\server.py", line 965, in __await_impl__
+    server = await self._create_server()
+  File "C:\Users\Samuel Klumpers\Desktop\Applications\Python\lib\asyncio\base_events.py", line 1361, in create_server
+    % (sa, err.strerror.lower())) from None
+OSError: [Errno 10048] error while attempting to bind on address ('0.0.0.0', 19684): only one usage of each socket address (protocol/network address/port) is normally permitted
+WARNING:root:encountered 5 errors in 600s, exiting
+ERROR:asyncio:Task was destroyed but it is pending!
+task: <Task pending coro=<open_server.<locals>.set_responsive_task() running at C:\Users\Samuel Klumpers\Desktop\Programming\Gui\Games\chess3\server\gameserver.py:298> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x00000230440F01F8>()]> cb=[_chain_future.<locals>._call_set_state() at C:\Users\Samuel Klumpers\Desktop\Applications\Python\lib\asyncio\futures.py:355]>
+ERROR:asyncio:Task was destroyed but it is pending!
+task: <Task pending coro=<open_server.<locals>.set_responsive_task() done, defined at C:\Users\Samuel Klumpers\Desktop\Programming\Gui\Games\chess3\server\gameserver.py:295> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x00000230440F0BB8>()]> cb=[_chain_future.<locals>._call_set_state() at C:\Users\Samuel Klumpers\Desktop\Applications\Python\lib\asyncio\futures.py:355]>
+ERROR:asyncio:Task was destroyed but it is pending!
+task: <Task pending coro=<open_server.<locals>.set_responsive_task() done, defined at C:\Users\Samuel Klumpers\Desktop\Programming\Gui\Games\chess3\server\gameserver.py:295> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x00000230440F0F18>()]> cb=[_chain_future.<locals>._call_set_state() at C:\Users\Samuel Klumpers\Desktop\Applications\Python\lib\asyncio\futures.py:355]>
+ERROR:asyncio:Task was destroyed but it is pending!
+task: <Task pending coro=<open_server.<locals>.set_responsive_task() done, defined at C:\Users\Samuel Klumpers\Desktop\Programming\Gui\Games\chess3\server\gameserver.py:295> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x0000023044182408>()]> cb=[_chain_future.<locals>._call_set_state() at C:\Users\Samuel Klumpers\Desktop\Applications\Python\lib\asyncio\futures.py:355]>

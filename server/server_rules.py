@@ -179,7 +179,10 @@ class SendFilterRule(Rule):
 
     def process(self, game: Game, effect: str, args):
         if effect == "send":
-            return [("send_filter", (args, self.filter))]
+            if self.filter == "all":
+                return [("send_raw", args)]
+            else:
+                return [("send_filter", (args, self.filter))]
         elif effect == "set_filter":
             if args == "all":
                 self.filter = self.filter_all
@@ -265,7 +268,7 @@ class WebTranslateRule(Rule):
 
     def process(self, game: Chess, effect: str, args):
         if effect == "draw_piece_at2":
-            return [("send_raw", ("draw_piece", args))]
+            return [("send", ("draw_piece", args))]
         elif effect == "draw_piece":
             piece = game.get_board().get_tile(args).piece
 
@@ -277,7 +280,7 @@ class WebTranslateRule(Rule):
 
             return [("draw_piece_at_cmap", (args, shape, col))]
         elif effect in ["overlay", "status"]:
-            return [("send_raw", (effect, args))]
+            return [("send", (effect, args))]
         elif effect == "askstring":
             return [("send_filter", ((effect, args[0]), args[1]))]
 
