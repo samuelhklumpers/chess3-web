@@ -67,7 +67,7 @@ class SelectRule(Rule):
             ret = []
 
             if self.selected:
-                ret += [("mark_cmap", (pos, "normal")), ("unselected", self.selected)]
+                ret += [("draw_piece", pos), ("unselected", self.selected)]
 
             if pos != self.selected:
                 self.selected = pos
