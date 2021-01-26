@@ -58,7 +58,7 @@ def setup_chess(mode):
     ruleset.add_rule(WinStopRule(), -1)
 
     base_move = [[IdMoveRule], [MoveTurnRule], [MovePlayerRule], [FriendlyFireRule]]
-    lazy_drawing = [DrawPieceCMAPRule(), RedrawRule2(), SelectRule(), MarkCMAPRule(), MarkRule2()]
+    lazy_drawing = [DrawPieceCMAPRule(), RedrawRule2(), MarkCMAPRule(), MarkRule2()]
     normal_drawing = lazy_drawing + [DrawSetPieceRule(), SelectRule()]
     late = [NextTurnRule(), WinCloseRule()]
 

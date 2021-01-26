@@ -68,7 +68,7 @@ def is_valid(indicate, move0, ruleset, start, end):
 
 class ServerLoSRule(Rule):
     def __init__(self, subruleset: Ruleset, move0):
-        Rule.__init__(self, watch=["turn_changed"])
+        Rule.__init__(self, watch=["turn_changed", "connect"])
 
         self.subruleset = subruleset
         self.move0 = move0
@@ -77,7 +77,7 @@ class ServerLoSRule(Rule):
         self.subruleset.add_rule(self.success_indicator)
 
     def process(self, game: Chess, effect: str, args):
-        if effect == "turn_changed":
+        if effect == "turn_changed" or effect == "connect":
             board = game.board
             pieces = {}
             visible = {}
