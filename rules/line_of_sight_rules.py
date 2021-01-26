@@ -75,7 +75,7 @@ class TouchCensorRule(Rule):
         tile, player = args
         visible = game.get_board().get_views().get(player, {}).get("visible", set())
 
-        if tile in visible:
+        if tuple(tile) in visible:
             return [(self.cons, args)]
 
 
