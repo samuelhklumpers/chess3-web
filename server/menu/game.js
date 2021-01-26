@@ -35,6 +35,21 @@ function draw_svg(ix, raw, col) {
 }
 
 
+function draw_text(cell, shape, colour) {
+    cell.innerHTML = "";
+    cell.innerHTML = shape.fontcolor(colour);
+
+    let children = cell.children;
+
+    if (children.length > 0)
+    {
+        cell.removeChild(children[0]);
+    }
+}
+
+
+let processWaitlist = Promise.resolve(0);
+
 function process(effect, args) {
     console.log(effect + " " + args.toString());
 
@@ -43,21 +58,15 @@ function process(effect, args) {
         let [pos, shape, colour] = args;
         let [j, i] = pos;
 
-        cell = playfield[i][j];
-        cell.innerHTML = "";
+        let cell = playfield[i][j];
 
         if (shape.endsWith(".svg")) {
-            fetch("/chess/images/" + shape).then(response => response.text()).then(raw => draw_svg([i, j], raw, colour));
+            let draw_callback = _ => fetch("/chess/images/" + shape).then(response => response.text()).then(raw => draw_svg([i, j], raw, colour));
+            processWaitlist = processWaitlist.then(draw_callback);
         }
         else {
-            cell.innerHTML = shape.fontcolor(colour);
-
-            let children = cell.children;
-
-            if (children.length > 0)
-            {
-                cell.removeChild(children[0]);
-            }
+            let draw_callback = _ => draw_text(cell, shape, colour);
+            processWaitlist = processWaitlist.then(draw_callback);
         }
     }
     else if (effect === "config")
