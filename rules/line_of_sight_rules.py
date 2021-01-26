@@ -143,8 +143,8 @@ class ServerLoSRule(Rule):
                     elist += [("draw_piece_at2", (tile, "", HEXCOL[player]))]
 
                 view = views.setdefault(player, {"visible": set(), "invisible": set()})
-                became_visible = view["invisible"].union(visible_p)
-                became_invisible = view["visible"].union(invisible_p)
+                became_visible = view["invisible"].intersection(visible_p)
+                became_invisible = view["visible"].intersection(invisible_p)
 
                 for tile in became_visible:
                     elist += [("overlay", (tile, "", HEXCOL["fog"]))]
