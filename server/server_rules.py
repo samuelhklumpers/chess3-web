@@ -186,7 +186,7 @@ class PromoteReadRule(Rule):
 
 class SendFilterRule(Rule):
     def __init__(self, filter_all: List[str]):
-        Rule.__init__(self, ["send", "set_filter"])
+        Rule.__init__(self, ["send", "set_filter", "push_filter", "pop_filter"])
 
         self.filter_all = filter_all
         self.filter = filter_all
