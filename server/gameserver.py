@@ -27,9 +27,13 @@ from rules.line_of_sight_rules import *
 logging.basicConfig(filename="gameserver.log", level=logging.WARNING)
 
 
-def server_actions():
+def min_server_actions():
     return [TakeRule(), MoveTakeRule(), SetPieceRule(), SetPlayerRule(),
-            WebTranslateRule(), ConnectRedrawRule(), StatusRule(), LockRule(), SendFilterRule(["b", "w"])]
+            WebTranslateRule(), StatusRule(), LockRule(), SendFilterRule(["b", "w"])]
+
+
+def server_actions():
+    return min_server_actions() + [ConnectRedrawRule()]
 
 
 def make_pure_moves(game, piece_move):
@@ -164,7 +168,7 @@ def setup_chess(mode):
         post_move = [MovedRule(), PawnPostDouble(), PromoteStartRule(["p"], ["L", "P", "T", "D"]),
                      PromoteReadRule(["L", "P", "T", "D"]), WinRule()]
 
-        actions = server_actions()
+        actions = min_server_actions()
         actions.append(TouchCensorRule("touch2"))
         actions.append(TouchMoveRule(move_start, cause="touch2"))
 
