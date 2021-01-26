@@ -212,7 +212,7 @@ class Board:
             self.tiles[ix] = tile_constr()
 
     def click(self, tile_i):
-        self.game.process("touch", (tile_i, self.game.get_player()))
+        self.game.process("touch", (tuple(tile_i), self.game.get_player()))
 
     def shape(self):
         return self.nx, self.ny
