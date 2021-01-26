@@ -130,6 +130,8 @@ class MoveTakeRule(Rule):
 
             elist = []
 
+            print(args[0], args[1])
+
             if args[0] != args[1]:
                 elist += [("set_piece", (args[1], moving_id))]
                 elist += [("set_piece", (args[0], null_id))]

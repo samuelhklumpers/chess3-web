@@ -296,6 +296,8 @@ class WebTranslateRule(Rule):
         elif effect == "draw_piece":
             piece = game.get_board().get_tile(args).piece
 
+            print(args, not piece or (piece.shape, piece.get_colour()))
+
             if piece:
                 shape = piece.shape
                 col = piece.get_colour()

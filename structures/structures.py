@@ -28,7 +28,7 @@ class Ruleset:
         self.watches = {"all": []}
         self.lock = threading.RLock()
 
-        self.debug = True
+        self.debug = False
 
     def add_rule(self, rule, prio=1):  # 0 first forbidden/debug, -1 last forbidden/debug
         self.rules.setdefault(prio, []).append(rule)
