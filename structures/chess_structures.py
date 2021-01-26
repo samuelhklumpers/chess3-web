@@ -205,6 +205,8 @@ class Board:
 
         self.tiles = np.empty((self.nx, self.ny), dtype=object)
 
+        self.views = {}
+
     def make_tiles(self, tile_constr: Callable[[], Tile]):
         for ix, v in np.ndenumerate(self.tiles):
             self.tiles[ix] = tile_constr()
@@ -222,6 +224,9 @@ class Board:
 
     def get_game(self):
         return self.game
+
+    def get_views(self):
+        return self.views
 
     def get_piece(self, tile_i):
         return self.get_tile(tile_i).get_piece()

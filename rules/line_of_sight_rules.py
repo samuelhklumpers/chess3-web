@@ -68,7 +68,7 @@ def is_valid(indicate, move0, ruleset, start, end):
 
 class ServerLoSRule(Rule):
     def __init__(self, subruleset: Ruleset, move0):
-        Rule.__init__(self, watch=["turn_changed", "connect"])
+        Rule.__init__(self, watch=["init", "turn_changed", "connect"])
 
         self.subruleset = subruleset
         self.move0 = move0
@@ -77,47 +77,67 @@ class ServerLoSRule(Rule):
         self.subruleset.add_rule(self.success_indicator)
 
     def process(self, game: Chess, effect: str, args):
-        if effect == "turn_changed" or effect == "connect":
+        if effect == "connect":
+            view = game.get_board().get_views().get(args, None)
+
+            if view:
+                res = [("set_filter", args)]
+                for tile in view["visible"]:
+                    res += [("draw_piece", tile)]
+                for tile in view["invisible"]:
+                    res += [("overlay", (tile, "#", HEXCOL["fog"])), ("draw_piece_at2", (tile, "", HEXCOL[args]))]
+                res += [("set_filter", "all")]
+                return res
+
+        if effect in ["init", "turn_changed"]:
             board = game.board
-            pieces = {}
-            visible = {}
-            invisible = {}
-            for tile_id in board.tile_ids():
-                piece = board.get_tile(tile_id).get_piece()
+            views = board.get_views()
+
+            pieces, visible, invisible = {}, {}, {}
+
+            tiles = list(board.tile_ids())
+            for tile in tiles:
+                piece = board.get_tile(tile).get_piece()
 
                 if piece:
                     player = piece.get_colour()
-                    pieces.setdefault(player, []).append((tile_id, piece))
-                    visible.setdefault(player, set()).add(tile_id)
+                    pieces.setdefault(player, []).append((tile, piece))
+                    visible.setdefault(player, set()).add(tile)
 
-            for tile_id in board.tile_ids():
+            for tile in tiles:
                 for player in pieces:
-                    if tile_id in visible.get(player, ()) or tile_id in invisible.get(player, ()):
+                    if tile in visible.get(player, ()) or tile in invisible.get(player, ()):
                         continue
 
-                    valid = False
+                    can_see = False
                     for start, piece in pieces[player]:
-                        valid = is_valid(self.success_indicator, self.move0, self.subruleset, start, tile_id)
-                        if valid:
-                            visible.setdefault(player, set()).add(tile_id)
+                        can_see = is_valid(self.success_indicator, self.move0, self.subruleset, start, tile)
+                        if can_see:
+                            visible.setdefault(player, set()).add(tile)
                             break
 
-                    if not valid:
-                        invisible.setdefault(player, set()).add(tile_id)
+                    if not can_see:
+                        invisible.setdefault(player, set()).add(tile)
 
             elist = []
             for player in visible:
+                visible_p, invisible_p = visible[player], invisible[player]
+
                 elist += [("set_filter", player)]
+                for tile in visible_p:
+                    elist += [("draw_piece", tile)]
+                for tile in invisible_p:
+                    elist += [("draw_piece_at2", (tile, "", HEXCOL[player]))]
 
-                for tile in visible[player]:
-                    elist += [("draw_piece", tile), ("overlay", (tile, "", HEXCOL["valid"]))]
+                view = views.get(player, set())
+                became_visible = view["invisible"].union(visible_p)
+                became_invisible = view["visible"].union(invisible_p)
 
-                for tile in invisible[player]:
-                    elist += [("draw_piece_at2", (tile, "", HEXCOL[player])),
-                              ("overlay", (tile, "#", HEXCOL["fog"]))]
-
+                for tile in became_visible:
+                    elist += [("overlay", (tile, "", HEXCOL["fog"]))]
+                for tile in became_invisible:
+                    elist += [("overlay", (tile, "#", HEXCOL["fog"]))]
             elist += [("set_filter", "all")]
-
 
             return elist
 
