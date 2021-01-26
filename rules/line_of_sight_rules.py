@@ -66,6 +66,19 @@ def is_valid(indicate, move0, ruleset, start, end):
     return ret
 
 
+class TouchCensorRule(Rule):
+    def __init__(self, cons):
+        Rule.__init__(self, watch=["touch"])
+        self.cons = cons
+
+    def process(self, game: Chess, effect: str, args):
+        tile, player = args
+        visible = game.get_board().get_views().get(player, {}).get("visible", set())
+
+        if tile in visible:
+            return [(self.cons, args)]
+
+
 class ServerLoSRule(Rule):
     def __init__(self, subruleset: Ruleset, move0):
         Rule.__init__(self, watch=["init", "turn_changed", "connect"])
@@ -145,4 +158,4 @@ class ServerLoSRule(Rule):
             return elist
 
 
-__all__ = ['LineOfSightRule', 'ServerLoSRule']
+__all__ = ['LineOfSightRule', 'ServerLoSRule', 'TouchCensorRule']

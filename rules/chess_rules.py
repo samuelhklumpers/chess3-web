@@ -9,14 +9,15 @@ from structures.chess_structures import *
 
 
 class TouchMoveRule(Rule):
-    def __init__(self, consequence: str):
-        Rule.__init__(self, watch=["touch"])
+    def __init__(self, consequence: str, cause: str = "touch"):
+        Rule.__init__(self, watch=[cause])
 
         self.prev = None
+        self.cause = cause
         self.consequence = consequence
 
     def process(self, game: Chess, effect: str, args):  # args must be a tile identifier corresponding to the board
-        if effect == "touch":
+        if effect == self.cause:
             if game.get_turn() not in args[1]:
                 return
 

@@ -165,7 +165,8 @@ def setup_chess(mode):
                      PromoteReadRule(["L", "P", "T", "D"]), WinRule()]
 
         actions = server_actions()
-        actions.append(TouchMoveRule(move_start))
+        actions.append(TouchCensorRule("touch2"))
+        actions.append(TouchMoveRule(move_start, cause="touch2"))
 
         ruleset.add_rule(ConnectSetupRule({"board_size": (8, 8)}), 0)
 
