@@ -129,7 +129,7 @@ class ServerLoSRule(Rule):
                 for tile in invisible_p:
                     elist += [("draw_piece_at2", (tile, "", HEXCOL[player]))]
 
-                view = views.get(player, set())
+                view = views.setdefault(player, {"visible": set(), "invisible": set()})
                 became_visible = view["invisible"].union(visible_p)
                 became_invisible = view["visible"].union(invisible_p)
 
@@ -137,6 +137,9 @@ class ServerLoSRule(Rule):
                     elist += [("overlay", (tile, "", HEXCOL["fog"]))]
                 for tile in became_invisible:
                     elist += [("overlay", (tile, "#", HEXCOL["fog"]))]
+
+                view["visible"] = visible_p
+                view["invisible"] = invisible_p
             elist += [("set_filter", "all")]
 
             return elist
