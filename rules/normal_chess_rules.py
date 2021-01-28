@@ -93,7 +93,7 @@ class PawnEnPassantRule(Rule):  # warning: will generate duplicate moves when pa
 
                     if other and piece.col != other.col and other.shape == "p"\
                             and other.double == game.get_turn_num() - 1:
-                        return [(self.consequence, args), ("take", (x3, y3))]
+                        return [("take", (x3, y3)), (self.consequence, args)]
 
 
 class KnightRule(Rule):
