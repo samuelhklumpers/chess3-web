@@ -72,7 +72,7 @@ class TouchCensorRule(Rule):
         self.cons = cons
 
     def process(self, game: Chess, effect: str, args):
-        tile, player = args
+        tile, player = args[0], args[1]
         visible = game.get_board().get_views().get(player, {}).get("visible", set())
 
         if tuple(tile) in visible:
@@ -81,7 +81,7 @@ class TouchCensorRule(Rule):
 
 class ServerLoSRule(Rule):
     def __init__(self, subruleset: Ruleset, move0):
-        Rule.__init__(self, watch=["init", "turn_changed", "connect"])
+        Rule.__init__(self, watch=["init", "board_change", "connect"])
 
         self.subruleset = subruleset
         self.move0 = move0
@@ -102,7 +102,7 @@ class ServerLoSRule(Rule):
                 res += [("set_filter", "all")]
                 return res
 
-        if effect in ["init", "turn_changed"]:
+        if effect in ["init", "board_change"]:
             board = game.board
             views = board.get_views()
 

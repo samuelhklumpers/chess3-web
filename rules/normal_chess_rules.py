@@ -209,7 +209,6 @@ class CastleRule(Rule):
     def process(self, game: Chess, effect: str, args):
         if effect == self.cause:
             piece = game.get_board().get_tile(args[0]).get_piece()
-            piece_id = game.get_id(piece)
             if piece.shape == "K":
                 if piece.moved > 0:
                     return
@@ -234,8 +233,7 @@ class CastleRule(Rule):
                     print(x2, y2)
 
                     if rook and rook.shape == "T" and rook.moved == 0:
-                        # minor hack because making two moves screws up parity
-                        return [("moved", (piece_id, args[0], args[1])), (self.consequence, args), (self.consequence, (other, end))]
+                        return [(self.consequence, args), (self.consequence, (other, end))]
 
 
 class PawnPostDouble(Rule):
@@ -277,12 +275,10 @@ class PromoteRule(Rule):
                 if shape in self.eligible:
                     promotion = simpledialog.askstring("Promotion", "One of: " + str(self.promotions))
 
-                    elist = []
-                    elist += [("take", end)]
-                    # avoid this ^ and skip to cleanup when using exploding pieces or so
+                    # avoid this and skip to cleanup when using exploding pieces or so
                     if promotion in self.promotions:
-                        elist += [("create_piece", (end, col, promotion))]
-                    return elist
+                        return [("take", end), ("create_piece", (end, col, promotion)), ("board_change", ())]
+                    return []
 
 
 class CheckRule(Rule):

@@ -29,7 +29,7 @@ logging.basicConfig(filename="gameserver.log", level=logging.WARNING)
 
 def min_server_actions():
     return [TakeRule(), MoveTakeRule(), SetPieceRule(), SetPlayerRule(),
-            WebTranslateRule(), StatusRule(), LockRule(), SendFilterRule(["b", "w"])]
+            WebTranslateRule(), StatusRule(), LockRule(), SendFilterRule(["b", "w"]), TouchStartsTurnRule("touch")]
 
 
 def server_actions():

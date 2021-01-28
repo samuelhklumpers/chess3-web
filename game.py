@@ -21,7 +21,7 @@ NETWORK_RULES: List[Rule] = [ReceiveRule("net0"), ColourRollRule("net0", "net1")
 
 def make_actions(move_start: str):
     return [TouchMoveRule(move_start), TakeRule(), MoveTakeRule(),
-            SetPieceRule(), SetPlayerRule(), WinMessageRule()]
+            SetPieceRule(), SetPlayerRule(), WinMessageRule(), TouchStartsTurnRule("touch")]
 
 
 def make_online(chess: Chess, whitelist: List[Rule]):
@@ -228,7 +228,7 @@ def play_shogi(online=True, playback="", record=True):
 
     ruleset.add_all(special + moves + post_move + actions + drawing)
 
-    late = [NextTurnRule(), WinCloseRule()]
+    late = [NextTurnRule(), WinCloseRule(), ExitRule()]
     ruleset.add_all(late, prio=-2)
 
     start = "wa9Lb9Nc9Sd9Ge9Kf9Gg9Sh9Ni9L" + "b8Bh8R" + "a7Pb7Pc7Pd7Pe7Pf7Pg7Ph7Pi7P;" \
@@ -242,4 +242,4 @@ def play_shogi(online=True, playback="", record=True):
 
 
 if __name__ == '__main__':
-    play_shogi(online=False, playback="", record=False)
+    play_los(online=False, playback="", record=False)

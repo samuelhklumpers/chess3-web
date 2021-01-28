@@ -36,6 +36,16 @@ class TouchMoveRule(Rule):
             return []
 
 
+class TouchStartsTurnRule(Rule):
+    def __init__(self, cause: str = "touch"):
+        Rule.__init__(self, watch=[cause])
+
+        self.cause = cause
+
+    def process(self, game: Chess, effect: str, args):
+        return [("start_turn", game.get_turn_num())]
+
+
 class IdMoveRule(Rule):
     def __init__(self, cause: str, consequence: str):
         Rule.__init__(self, watch=[cause])
@@ -112,7 +122,7 @@ class SuccesfulMoveRule(Rule):
 
     def process(self, game: Chess, effect: str, args):
         if effect == self.cause:
-            return [("move_success", args)]
+            return [("move_success", args), ("end_turn", game.get_turn_num())]
 
 
 class MoveTakeRule(Rule):
@@ -129,8 +139,6 @@ class MoveTakeRule(Rule):
             null_id = game.get_id(None)
 
             elist = []
-
-            print(args[0], args[1])
 
             if args[0] != args[1]:
                 elist += [("set_piece", (args[1], moving_id))]
@@ -195,21 +203,24 @@ class MoveRedrawRule(Rule):
 
 class NextTurnRule(Rule):
     def __init__(self):
-        Rule.__init__(self, watch=["moved", "do_turn"])
+        Rule.__init__(self, watch=["start_turn", "end_turn"])
+
+        self.num = 0
 
     def process(self, game: Chess, effect: str, args):
-        if effect == "moved":
-            return [("do_turn", ())]
+        if effect == "start_turn":
+            self.num = game.get_turn_num()
 
-        if effect == "do_turn":
-            if game.turn == "w":
-                game.turn = "b"
-            elif game.turn == "b":
-                game.turn = "w"
+        if effect == "end_turn":
+            if self.num == game.get_turn_num():
+                if game.turn == "w":
+                    game.turn = "b"
+                elif game.turn == "b":
+                    game.turn = "w"
 
-            game.turn_num += 1
+                game.turn_num += 1
 
-            return [("turn_changed", game.turn)]
+                return [("turn_changed", game.turn), ("board_change", ())]
 
 
 class MovedRule(Rule):
@@ -354,4 +365,4 @@ class ExitRule(Rule):
 __all__ = ['TouchMoveRule', 'IdMoveRule', 'MoveTurnRule', 'MovePlayerRule', 'FriendlyFireRule', 'SuccesfulMoveRule',
            'MoveTakeRule', 'TakeRule', 'CreatePieceRule', 'SetPieceRule', 'MoveRedrawRule', 'NextTurnRule',
            'MovedRule', 'CounterRule', 'WinRule', 'WinMessageRule', 'WinCloseRule', 'SetPlayerRule', 'RecordRule',
-           'PlaybackRule', 'ExitRule']
+           'PlaybackRule', 'ExitRule', 'TouchStartsTurnRule']
