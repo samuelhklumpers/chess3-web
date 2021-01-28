@@ -179,7 +179,7 @@ class PromoteReadRule(Rule):
 
                 if text in self.promotions:
                     self.promoting = None
-                    return [("take", end), ("unlock_turn", ()), ("create_piece", (end, col, text))]
+                    return [("take", end), ("unlock_turn", ()), ("create_piece", (end, col, text)), ("board_change", ())]
                 else:
                     return [("askstring", ("Promote to: " + str(self.promotions), col))]
 
