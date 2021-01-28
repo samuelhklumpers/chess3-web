@@ -217,10 +217,15 @@ class CastleRule(Rule):
                 x2, y2 = args[1]
                 dx, dy = x2 - x1, y2 - y1
 
+                for x, y in xyiter(x1, y1, x2, y2):
+                    if game.get_board().get_tile((x, y)).get_piece():
+                        return
+
                 if abs(dx) == 2 and dy == 0:
                     if dx < 0:
                         other = (x1 - 4, y1)
                         end = (x1 - 1, y1)
+
                         rook = game.get_board().get_tile(other).get_piece()
                     else:
                         other = (x1 + 3, y1)
@@ -233,7 +238,7 @@ class CastleRule(Rule):
                     print(x2, y2)
 
                     if rook and rook.shape == "T" and rook.moved == 0:
-                        return [(self.consequence, args), (self.consequence, (other, end))]
+                        return [(self.consequence, args), (self.consequence, (other, end)), ("board_change", ())]
 
 
 class PawnPostDouble(Rule):
