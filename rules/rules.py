@@ -59,13 +59,4 @@ def chain_rules(steps, base):
     return intro, rules, out_effect
 
 
-def unpack2ddr(args):
-        x1, y1 = args[0]
-        x2, y2 = args[1]
-
-        dx, dy = x2 - x1, y2 - y1
-
-        return dx, dy
-
-
-__all__ = ["Rule", "AnyRule", "IndicatorRule", "chain_rules", "unpack2ddr"]
+__all__ = ["Rule", "AnyRule", "IndicatorRule", "chain_rules"]

@@ -27,4 +27,13 @@ def xyiter(x1, y1, x2, y2, incl_start=False, incl_end=False):
         yield x2, y2
 
 
-__all__ = ["grouper", "xyiter"]
+def unpack2ddr(args):
+        x1, y1 = args[0]
+        x2, y2 = args[1]
+
+        dx, dy = x2 - x1, y2 - y1
+
+        return dx, dy
+
+
+__all__ = ["grouper", "xyiter", "unpack2ddr"]

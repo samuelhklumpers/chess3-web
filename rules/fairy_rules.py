@@ -38,7 +38,7 @@ class JumperRule(Rule):
                 x2, y2 = args[1]
 
                 dx, dy = x2 - x1, y2 - y1
-                dx2, dy2 = np.sign(dx), np.sign(dy)
+                dx2, dy2 = int(np.sign(dx)), int(np.sign(dy))
 
                 if game.get_board().get_tile(args[1]).get_piece():
                     return
