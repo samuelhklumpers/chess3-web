@@ -1,19 +1,10 @@
 import bisect
 import threading
 
-import tkinter as tk
-
 
 class Game:
     def __init__(self):
         self.ruleset = Ruleset(self)
-
-
-class TkGame(tk.Tk):
-    def __init__(self, game: Game):
-        tk.Tk.__init__(self, "game")
-
-        self.game = game
 
 
 class Tile:
@@ -94,4 +85,4 @@ class Ruleset:
         self.process_all(consequences)
 
 
-__all__ = ["Game", "TkGame", "Tile", "Ruleset"]
+__all__ = ["Game", "Tile", "Ruleset"]
