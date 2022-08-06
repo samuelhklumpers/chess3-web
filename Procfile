@@ -1,1 +1,1 @@
-web: python server/menuserver.py
+web: python server/menuserver.py $PORT
