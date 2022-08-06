@@ -8,7 +8,7 @@ PORT = 8080
 if len(sys.argv) > 1:
     PORT = int(sys.argv[1])
     
-handler = partial(http.server.SimpleHTTPRequestHandler, directory="./menu")
+handler = partial(http.server.SimpleHTTPRequestHandler, directory="server/menu")
 
 with socketserver.TCPServer(("", PORT), handler) as http_server:
     print(http_server.server_address)
