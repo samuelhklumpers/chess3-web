@@ -1,5 +1,6 @@
 import http.server
 import socketserver
+import sys
 
 from functools import partial
 
