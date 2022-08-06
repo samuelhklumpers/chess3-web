@@ -1,4 +1,3 @@
-from tkinter import simpledialog
 from typing import List
 
 from structures.lazy_structures import RefChess
