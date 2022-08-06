@@ -242,4 +242,4 @@ def play_shogi(online=True, playback="", record=True):
 
 
 if __name__ == '__main__':
-    play_los(online=False, playback="", record=False)
+    play_shogi(online=False, playback="", record=False)

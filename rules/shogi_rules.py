@@ -242,7 +242,7 @@ class ShogiPromoteReadRule(Rule):
         elif effect == "promote":
             end, col, res = args
             null_id = game.get_id(None)
-            return [("set_piece", (end, null_id)), ("create_piece", (end, col, res)), ("take", end)]
+            return [("set_piece", (end, null_id)), ("create_piece", (end, col, res))] #, ("take", end)]
         elif effect == "readstring":
             if self.promoting:
                 text, player = args
