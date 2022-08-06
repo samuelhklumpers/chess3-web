@@ -96,7 +96,7 @@ function process(effect, args) {
     }
 }
 
-socket = new WebSocket("http://chess-v3.herokuapp.com/");
+socket = new WebSocket("https://chess-v3.herokuapp.com/");
 socket.onmessage = function (event) {
     let msg = event.data;
     let data = JSON.parse(msg);
